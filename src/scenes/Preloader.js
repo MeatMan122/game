@@ -29,14 +29,33 @@ export class Preloader extends Scene
 
     preload ()
     {
-        //  Load the assets for the game - Replace with your own assets
+        //  Load the assets for the game
         this.load.setPath('assets');
 
+        // Load the character spritesheet
+        this.load.setPath('assets/roguelike-game-kit-pixel-art/1 Characters/1');
+        this.load.spritesheet('archer-idle', 'D_Idle.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            startFrame: 0,
+            endFrame: 3
+        });
+
+        // Reset path for other assets
+        this.load.setPath('assets');
         this.load.image('logo', 'logo.png');
     }
 
     create ()
     {
+        // Create the archer idle animation configuration
+        this.anims.create({
+            key: 'archer-idle',
+            frames: this.anims.generateFrameNumbers('archer-idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
         //  For example, you can define global animations here, so we can use them in other scenes.
 

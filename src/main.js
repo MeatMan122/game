@@ -9,14 +9,21 @@ import { Settings } from "./scenes/Settings";
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
 const config = {
   type: Phaser.AUTO,
-  width: 1920, // 1080p width
-  height: 1080, // 1080p height
+  width: 1024,
+  height: 768, 
   parent: "game-container",
   backgroundColor: "#028af8",
   scale: {
     mode: Phaser.Scale.FIT, // Scales to fit the container while maintaining aspect ratio
     autoCenter: Phaser.Scale.CENTER_BOTH,
     // Limit to browser window dimensions to prevent scrolling
+  },
+  // Add physics for unit placement
+  physics: {
+    default: 'arcade',
+    arcade: {
+      debug: false
+    }
   },
   scene: [Boot, Preloader, MainMenu, Game, GameOver, Settings],
 };
