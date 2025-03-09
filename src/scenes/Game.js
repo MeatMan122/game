@@ -87,16 +87,18 @@ export class Game extends Scene {
           snappedY >= this.GRID_PADDING.top && 
           snappedY <= this.GRID_HEIGHT * this.CELL_SIZE + this.GRID_PADDING.top) {
         
+        let unit;
         if (this.selectedUnit === 'archer') {
-          // Create archer unit with animation
-          const unit = this.add.sprite(snappedX, snappedY, 'archer-idle', 0);
+          unit = this.add.sprite(snappedX, snappedY, 'archer-idle', 0);
           unit.play('archer-idle');
-          this.gameContainer.add(unit);
+        } else if (this.selectedUnit === 'warrior') {
+          unit = this.add.sprite(snappedX, snappedY, 'warrior-idle', 0);
+          unit.play('warrior-idle');
         } else {
           // Default red circle if no unit selected
-          const circle = this.add.circle(snappedX, snappedY, this.CELL_SIZE / 3, 0xff0000, 0.5);
-          this.gameContainer.add(circle);
+          unit = this.add.circle(snappedX, snappedY, this.CELL_SIZE / 3, 0xff0000, 0.5);
         }
+        this.gameContainer.add(unit);
       }
     });
 
@@ -127,7 +129,8 @@ export class Game extends Scene {
     );
     menuBg.setOrigin(0, 0);
     
-    const BUTTON_PADDING = 20; // Padding from the left edge
+    const BUTTON_PADDING = 50; // Padding from the left edge
+    const BUTTON_SPACING = 70; // Space between buttons
     const BUTTON_SIZE = 50; // Size of the unit button
 
     // Create archer button using the UnitButton component
@@ -138,15 +141,52 @@ export class Game extends Scene {
       color: 0x00ff00,
       name: 'Archer',
       onClick: (isSelected) => {
-        this.selectedUnit = isSelected ? 'archer' : null;
+        if (isSelected) {
+          // Deselect other buttons
+          this.unitButtons.forEach((button, key) => {
+            if (key !== 'archer' && button.isSelected) {
+              button.isSelected = false;
+              button.button.setStrokeStyle(0);
+            }
+          });
+          this.selectedUnit = 'archer';
+        } else {
+          this.selectedUnit = null;
+        }
       }
     });
+    archerButton.setDepth(101);
+
+    // Create warrior button using the UnitButton component
+    const warriorButton = new UnitButton(this, {
+      x: BUTTON_PADDING + BUTTON_SPACING,
+      y: this.scale.height - this.UI_HEIGHT / 2,
+      size: BUTTON_SIZE,
+      color: 0xff0000,
+      name: 'Warrior',
+      onClick: (isSelected) => {
+        if (isSelected) {
+          // Deselect other buttons
+          this.unitButtons.forEach((button, key) => {
+            if (key !== 'warrior' && button.isSelected) {
+              button.isSelected = false;
+              button.button.setStrokeStyle(0);
+            }
+          });
+          this.selectedUnit = 'warrior';
+        } else {
+          this.selectedUnit = null;
+        }
+      }
+    });
+    warriorButton.setDepth(101);
     
-    // Store the button for future reference
+    // Store buttons for future reference
     this.unitButtons.set('archer', archerButton);
+    this.unitButtons.set('warrior', warriorButton);
 
     // Add UI elements to the container
-    uiContainer.add([menuBg]);
+    uiContainer.add([menuBg, archerButton.container, warriorButton.container]);
     
     // Set up UI camera to only show UI elements
     this.uiCamera.ignore(this.gameContainer);

@@ -32,9 +32,19 @@ export class Preloader extends Scene
         //  Load the assets for the game
         this.load.setPath('assets');
 
-        // Load the character spritesheet
-        this.load.setPath('assets/roguelike-game-kit-pixel-art/1 Characters/1');
-        this.load.spritesheet('archer-idle', 'D_Idle.png', {
+        // Load the character sprites
+        this.load.setPath('assets/roguelike-game-kit-pixel-art/1 Characters');
+        
+        // Load archer spritesheet
+        this.load.spritesheet('archer-idle', '1/D_Idle.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+            startFrame: 0,
+            endFrame: 3
+        });
+
+        // Load warrior spritesheet
+        this.load.spritesheet('warrior-idle', '2/D_Idle.png', {
             frameWidth: 32,
             frameHeight: 32,
             startFrame: 0,
@@ -52,6 +62,14 @@ export class Preloader extends Scene
         this.anims.create({
             key: 'archer-idle',
             frames: this.anims.generateFrameNumbers('archer-idle', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Create the warrior idle animation configuration
+        this.anims.create({
+            key: 'warrior-idle',
+            frames: this.anims.generateFrameNumbers('warrior-idle', { start: 0, end: 3 }),
             frameRate: 8,
             repeat: -1
         });

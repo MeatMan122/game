@@ -61,12 +61,13 @@ export class UnitButton {
             }
         });
 
-        // Add elements to container
+        // Add elements to container and position container at 0,0
         this.container.add([this.button, this.text]);
     }
 
     setDepth(depth) {
-        this.container.setDepth(depth);
+        this.button.setDepth(depth);
+        this.text.setDepth(depth + 1); // Ensure text is above button
         return this;
     }
 
