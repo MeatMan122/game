@@ -10,7 +10,7 @@ export class Game extends Scene {
     this.GRID_PADDING = {
       top: 120,
       right: 120,
-      bottom: 200, // Larger bottom padding to accommodate UI
+      bottom: 250, // Larger bottom padding to accommodate UI
       left: 120
     }; // Padding around the grid
     this.UI_HEIGHT = 100; // Height of the UI panel
