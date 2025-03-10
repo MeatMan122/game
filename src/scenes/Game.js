@@ -3,6 +3,7 @@ import { UnitButton } from "../ui/components/UnitButton";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
+import { UnitConfigs } from "../configs/UnitConfigs";
 
 export class Game extends Scene {
   constructor() {
@@ -22,6 +23,11 @@ export class Game extends Scene {
       left: BASE_PADDING
     };
 
+    // UI constants
+    this.BUTTON_PADDING = 50;
+    this.BUTTON_SPACING = 70;
+    this.BUTTON_SIZE = 50;
+
     // Territory constants
     this.NO_MANS_LAND_HEIGHT = 9; // Height of no-man's land in cells
     this.TERRITORY_HEIGHT = Math.floor((this.GRID_HEIGHT - this.NO_MANS_LAND_HEIGHT) / 2); // Height of each player's territory
@@ -34,10 +40,6 @@ export class Game extends Scene {
     
     // Resource management
     this.STARTING_GOLD = 500;
-    this.UNIT_COSTS = {
-      archer: 50,
-      warrior: 50
-    };
     this.gold = this.STARTING_GOLD;
   }
 
@@ -101,26 +103,28 @@ export class Game extends Scene {
     );
     menuBg.setOrigin(0, 0);
     
-    const BUTTON_PADDING = 50;
-    const BUTTON_SPACING = 70;
-    const BUTTON_SIZE = 50;
-
     // Create gold counter
     const goldText = this.resourceSystem.createGoldCounter(
-      this.scale.width - BUTTON_PADDING,
+      this.scale.width - this.BUTTON_PADDING,
       this.scale.height - this.UI_HEIGHT / 2
     );
 
-    // Create unit buttons
-    const archerButton = this.createUnitButton('archer', BUTTON_PADDING, BUTTON_SPACING, BUTTON_SIZE);
-    const warriorButton = this.createUnitButton('warrior', BUTTON_PADDING + BUTTON_SPACING, BUTTON_SPACING, BUTTON_SIZE);
+    // Add base UI elements
+    uiContainer.add([menuBg, goldText]);
     
-    // Add UI elements to container
-    uiContainer.add([menuBg, goldText, archerButton.container, warriorButton.container]);
+    // Create buttons and add to UI container
+    this.createButtons(uiContainer);
     
     // Set up UI camera to only show UI elements
     this.uiCamera.ignore(this.gameContainer);
     this.cameras.main.ignore(uiContainer);
+  }
+
+  createButtons(uiContainer) {
+    this.ArcherButton = this.createUnitButton('archer', this.BUTTON_PADDING, this.BUTTON_SPACING, this.BUTTON_SIZE);
+    this.warriorButton = this.createUnitButton('warrior', this.BUTTON_PADDING + this.BUTTON_SPACING, this.BUTTON_SPACING, this.BUTTON_SIZE);
+    
+    uiContainer.add([this.ArcherButton.container, this.warriorButton.container]);
   }
 
   createUnitButton(unitType, x, y, size) {
@@ -128,15 +132,14 @@ export class Game extends Scene {
       x: x,
       y: this.scale.height - this.UI_HEIGHT / 2,
       size: size,
-      color: unitType === 'archer' ? 0x00ff00 : 0xff0000,
-      name: `${unitType.charAt(0).toUpperCase() + unitType.slice(1)}\n(${this.resourceSystem.UNIT_COSTS[unitType]} gold)`,
+      color: UnitConfigs.getColor(unitType),
+      name: `${unitType}\n(${UnitConfigs.getCost(unitType)} gold)`,
       onClick: (isSelected) => {
         if (isSelected) {
           if (this.resourceSystem.canAfford(unitType)) {
             this.unitSystem.setSelectedUnit(unitType);
           } else {
-            button.isSelected = false;
-            button.button.setStrokeStyle(0);
+            button.setSelected(false);
             this.resourceSystem.showInsufficientGoldFeedback();
           }
         } else {
@@ -145,6 +148,7 @@ export class Game extends Scene {
       }
     });
     button.setDepth(101);
+    this.unitSystem.registerButton(unitType, button);
     return button;
   }
 
@@ -152,17 +156,36 @@ export class Game extends Scene {
     // Mouse move handler
     this.input.on('pointermove', (pointer) => {
       const selectedUnit = this.unitSystem.getSelectedUnit();
-      if (selectedUnit && !this.unitSystem.previewUnit) {
+      if (selectedUnit && !this.unitSystem.previewUnits.length) {
         this.unitSystem.createPreviewUnit(selectedUnit, 0, 0);
       }
 
-      if (this.unitSystem.previewUnit) {
+      if (this.unitSystem.previewUnits.length > 0) {
         const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
         const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
         
-        const isValidPosition = this.gridSystem.isValidGridPosition(gridX, gridY) &&
-                             this.gridSystem.getTerritoryAt(gridY) === 'player';
+        const selectedUnit = this.unitSystem.getSelectedUnit();
+        const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(selectedUnit);
+        
+        // Check if all units in the line can be placed
+        let isValidPosition = true;
+        
+        // Check grid boundaries and territory
+        for (let i = 0; i < unitsPerPlacement; i++) {
+          const currentGridX = gridX + i;
+          if (!this.gridSystem.isValidGridPosition(currentGridX, gridY) || 
+              this.gridSystem.getTerritoryAt(gridY) !== 'player' ||
+              currentGridX >= this.GRID_WIDTH) {
+            isValidPosition = false;
+            break;
+          }
+        }
+
+        // Check if positions are occupied
+        if (isValidPosition) {
+          isValidPosition = this.gridSystem.areGridPositionsAvailable(gridX, gridY, unitsPerPlacement);
+        }
         
         this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
       }
@@ -176,18 +199,42 @@ export class Game extends Scene {
       const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
       const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
 
-      if (this.gridSystem.isValidGridPosition(gridX, gridY)) {
-        const territory = this.gridSystem.getTerritoryAt(gridY);
-        const selectedUnit = this.unitSystem.getSelectedUnit();
-        
-        if (territory === 'player' && selectedUnit) {
-          if (this.resourceSystem.deductCost(selectedUnit)) {
-            this.unitSystem.placeUnit(selectedUnit, snappedX, snappedY);
-            this.unitSystem.clearSelection();
-          }
-        } else if (territory !== 'player') {
-          this.gridSystem.showInvalidPlacementFeedback(snappedX, snappedY);
+      const selectedUnit = this.unitSystem.getSelectedUnit();
+      if (!selectedUnit) return;
+
+      const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(selectedUnit);
+      
+      // Check if all units in the line can be placed
+      let canPlace = true;
+      
+      // Check grid boundaries and territory
+      for (let i = 0; i < unitsPerPlacement; i++) {
+        const currentGridX = gridX + i;
+        if (!this.gridSystem.isValidGridPosition(currentGridX, gridY) || 
+            this.gridSystem.getTerritoryAt(gridY) !== 'player' ||
+            currentGridX >= this.GRID_WIDTH) {
+          canPlace = false;
+          break;
         }
+      }
+
+      // Check if positions are occupied
+      if (canPlace) {
+        canPlace = this.gridSystem.areGridPositionsAvailable(gridX, gridY, unitsPerPlacement);
+      }
+
+      if (canPlace) {
+        if (this.resourceSystem.deductCost(selectedUnit)) {
+          // Place units and mark their positions as occupied
+          this.unitSystem.placeUnit(selectedUnit, snappedX, snappedY);
+          for (let i = 0; i < unitsPerPlacement; i++) {
+            this.gridSystem.addUnit(gridX + i, gridY);
+          }
+          this.unitSystem.clearSelection();
+        }
+      } else {
+        const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(selectedUnit);
+        this.gridSystem.showInvalidPlacementFeedback(snappedX, snappedY, unitsPerPlacement);
       }
     });
 

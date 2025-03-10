@@ -18,6 +18,7 @@ export class GridSystem {
         this.TERRITORY_HEIGHT = Math.floor((this.GRID_HEIGHT - this.NO_MANS_LAND_HEIGHT) / 2);
         
         this.gridGraphics = null;
+        this.occupiedCells = new Set(); // Track occupied grid positions
     }
 
     create(gameContainer) {
@@ -133,14 +134,52 @@ export class GridSystem {
         this.gridGraphics.strokePath();
     }
 
-    showInvalidPlacementFeedback(x, y) {
-        const feedback = this.scene.add.rectangle(x, y, this.CELL_SIZE, this.CELL_SIZE, 0xff0000, 0.3);
-        this.scene.gameContainer.add(feedback);
-        this.scene.tweens.add({
-            targets: feedback,
-            alpha: 0,
-            duration: 300,
-            onComplete: () => feedback.destroy()
-        });
+    showInvalidPlacementFeedback(x, y, unitsCount = 1) {
+        for (let i = 0; i < unitsCount; i++) {
+            const feedback = this.scene.add.rectangle(
+                x + (i * this.CELL_SIZE), 
+                y, 
+                this.CELL_SIZE, 
+                this.CELL_SIZE, 
+                0xff0000, 
+                0.3
+            );
+            this.scene.gameContainer.add(feedback);
+            this.scene.tweens.add({
+                targets: feedback,
+                alpha: 0,
+                duration: 300,
+                onComplete: () => feedback.destroy()
+            });
+        }
+    }
+
+    // Add a unit to the grid tracking
+    addUnit(gridX, gridY) {
+        const key = `${gridX},${gridY}`;
+        this.occupiedCells.add(key);
+    }
+
+    // Remove a unit from grid tracking
+    removeUnit(gridX, gridY) {
+        const key = `${gridX},${gridY}`;
+        this.occupiedCells.delete(key);
+    }
+
+    // Check if a cell is occupied
+    isCellOccupied(gridX, gridY) {
+        const key = `${gridX},${gridY}`;
+        return this.occupiedCells.has(key);
+    }
+
+    // Check if a range of cells is free
+    areGridPositionsAvailable(startGridX, gridY, count) {
+        for (let i = 0; i < count; i++) {
+            const currentGridX = startGridX + i;
+            if (this.isCellOccupied(currentGridX, gridY)) {
+                return false;
+            }
+        }
+        return true;
     }
 } 

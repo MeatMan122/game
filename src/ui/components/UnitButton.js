@@ -1,74 +1,65 @@
 export class UnitButton {
     constructor(scene, config) {
         this.scene = scene;
-        this.config = {
-            x: 0,
-            y: 0,
-            size: 50,
-            color: 0x00ff00,
-            name: 'Unit',
-            textStyle: {
-                fontSize: '14px',
-                color: '#ffffff'
-            },
-            ...config
-        };
-
-        this.container = scene.add.container(0, 0);
+        this.x = config.x;
+        this.y = config.y;
+        this.size = config.size;
+        this.color = config.color;
+        this.name = config.name.charAt(0).toUpperCase() + config.name.slice(1);
+        this.onClick = config.onClick;
         this.isSelected = false;
+        
+        this.container = this.scene.add.container(0, 0);
         this.createButton();
     }
 
     createButton() {
         // Create the button rectangle
-        this.button = this.scene.add.rectangle(
-            this.config.x,
-            this.config.y,
-            this.config.size,
-            this.config.size,
-            this.config.color
-        );
+        this.button = this.scene.add.rectangle(this.x, this.y, this.size, this.size, this.color);
         this.button.setInteractive();
-
+        
         // Create hover text
-        this.text = this.scene.add.text(
-            this.config.x + this.config.size/2,
-            this.config.y - this.config.size/4,
-            this.config.name,
-            this.config.textStyle
-        );
-        this.text.setOrigin(0.5);
-        this.text.setVisible(false);
+        this.text = this.scene.add.text(this.x, this.y - this.size - 10, this.name, {
+            fontSize: '16px',
+            color: '#ffffff',
+            align: 'center'
+        });
+        this.text.setOrigin(0.5, 1);
+        this.text.setAlpha(0);
 
         // Add event listeners
         this.button.on('pointerover', () => {
-            this.button.setStrokeStyle(2, 0xffffff);
-            this.text.setVisible(true);
+            this.text.setAlpha(1);
+            if (!this.isSelected) {
+                this.button.setStrokeStyle(2, 0xffffff);
+            }
         });
 
         this.button.on('pointerout', () => {
+            this.text.setAlpha(0);
             if (!this.isSelected) {
                 this.button.setStrokeStyle(0);
             }
-            this.text.setVisible(false);
         });
 
         this.button.on('pointerdown', () => {
-            this.isSelected = !this.isSelected;
-            this.button.setStrokeStyle(2, this.isSelected ? 0xffff00 : 0);
-            if (this.config.onClick) {
-                this.config.onClick(this.isSelected);
+            this.setSelected(!this.isSelected);
+            if (this.onClick) {
+                this.onClick(this.isSelected);
             }
         });
 
-        // Add elements to container and position container at 0,0
+        // Add elements to container
         this.container.add([this.button, this.text]);
     }
 
+    setSelected(selected) {
+        this.isSelected = selected;
+        this.button.setStrokeStyle(selected ? 2 : 0, 0xffffff);
+    }
+
     setDepth(depth) {
-        this.button.setDepth(depth);
-        this.text.setDepth(depth + 1); // Ensure text is above button
-        return this;
+        this.container.setDepth(depth);
     }
 
     setVisible(visible) {
