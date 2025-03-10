@@ -1,115 +1,87 @@
 import { Scene } from "phaser";
 import { UnitButton } from "../ui/components/UnitButton";
+import { GridSystem } from "../systems/GridSystem";
+import { ResourceSystem } from "../systems/ResourceSystem";
+import { UnitSystem } from "../systems/UnitSystem";
 
 export class Game extends Scene {
   constructor() {
     super("Game");
     this.CELL_SIZE = 32; // Size of each grid cell in pixels
+    
+    // Calculate grid dimensions based on available space and desired aspect ratio
+    const BASE_PADDING = 120; // Base padding value
+    const EXTRA_BOTTOM = 130; // Additional bottom padding for UI (250 - 120)
+    
     this.GRID_WIDTH = 75; // Number of cells horizontally
     this.GRID_HEIGHT = 75; // Number of cells vertically
     this.GRID_PADDING = {
-      top: 120,
-      right: 120,
-      bottom: 250, // Larger bottom padding to accommodate UI
-      left: 120
-    }; // Padding around the grid
+      top: BASE_PADDING,
+      right: BASE_PADDING,
+      bottom: BASE_PADDING + EXTRA_BOTTOM,
+      left: BASE_PADDING
+    };
+
+    // Territory constants
+    this.NO_MANS_LAND_HEIGHT = 9; // Height of no-man's land in cells
+    this.TERRITORY_HEIGHT = Math.floor((this.GRID_HEIGHT - this.NO_MANS_LAND_HEIGHT) / 2); // Height of each player's territory
+    
     this.UI_HEIGHT = 100; // Height of the UI panel
     this.selectedUnit = null; // Track which unit is selected for placement
+    this.previewUnit = null; // Preview unit that follows cursor
     this.gridGraphics = null; // Graphics object for the grid
     this.unitButtons = new Map(); // Store unit buttons
+    
+    // Resource management
+    this.STARTING_GOLD = 500;
+    this.UNIT_COSTS = {
+      archer: 50,
+      warrior: 50
+    };
+    this.gold = this.STARTING_GOLD;
   }
 
   create() {
-    // Calculate total world size including padding
-    const worldWidth = this.CELL_SIZE * this.GRID_WIDTH + this.GRID_PADDING.left + this.GRID_PADDING.right;
-    const worldHeight = this.CELL_SIZE * this.GRID_HEIGHT + this.GRID_PADDING.top + this.GRID_PADDING.bottom;
+    // Initialize systems
+    this.gridSystem = new GridSystem(this);
+    this.resourceSystem = new ResourceSystem(this);
+    this.unitSystem = new UnitSystem(this);
 
+    // Create game world container
+    this.gameContainer = this.add.container(0, 0);
+
+    // Set up cameras
+    const worldSize = this.gridSystem.getWorldSize();
+    this.setupCameras(worldSize);
+
+    // Create grid
+    this.gridSystem.create(this.gameContainer);
+
+    // Create UI
+    this.createUnitSelectionMenu();
+
+    // Set up input handlers
+    this.setupInputHandlers();
+  }
+
+  setupCameras(worldSize) {
     // Set up the main camera
     this.cameras.main.setBackgroundColor('#028af8');
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    this.cameras.main.setBounds(0, 0, worldSize.width, worldSize.height);
     this.cameras.main.setZoom(1);
-    this.cameras.main.centerOn(worldWidth / 2, worldHeight / 2);
+    this.cameras.main.centerOn(worldSize.width / 2, worldSize.height / 2);
 
     // Create UI camera
     this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
     this.uiCamera.setScroll(0, 0);
     this.uiCamera.transparent = true;
 
-    // Create a game world container for all game objects
-    this.gameContainer = this.add.container(0, 0);
-    
-    // Enable camera controls
+    // Enable WASD controls
     this.wasd = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
       down: Phaser.Input.Keyboard.KeyCodes.S,
       left: Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D
-    });
-    
-    // Create graphics object for the grid
-    this.gridGraphics = this.add.graphics();
-    this.gridGraphics.lineStyle(1, 0x666666, 0.8);
-    this.gameContainer.add(this.gridGraphics);
-
-    // Draw vertical lines (offset by padding)
-    for (let x = 0; x <= this.GRID_WIDTH * this.CELL_SIZE; x += this.CELL_SIZE) {
-      this.gridGraphics.moveTo(x + this.GRID_PADDING.left, this.GRID_PADDING.top);
-      this.gridGraphics.lineTo(x + this.GRID_PADDING.left, this.GRID_HEIGHT * this.CELL_SIZE + this.GRID_PADDING.top);
-    }
-
-    // Draw horizontal lines (offset by padding)
-    for (let y = 0; y <= this.GRID_HEIGHT * this.CELL_SIZE; y += this.CELL_SIZE) {
-      this.gridGraphics.moveTo(this.GRID_PADDING.left, y + this.GRID_PADDING.top);
-      this.gridGraphics.lineTo(this.GRID_WIDTH * this.CELL_SIZE + this.GRID_PADDING.left, y + this.GRID_PADDING.top);
-    }
-
-    // Render the grid
-    this.gridGraphics.strokePath();
-
-    // Create unit selection menu
-    this.createUnitSelectionMenu();
-
-    // Add mouse input for grid interaction
-    this.input.on('pointerdown', (pointer) => {
-      // Ignore clicks on the UI at the bottom
-      if (pointer.y > this.scale.height - this.UI_HEIGHT) return;
-
-      // Convert screen coordinates to world coordinates
-      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      
-      // Snap to grid (accounting for padding)
-      const snappedX = Math.floor((worldPoint.x - this.GRID_PADDING.left) / this.CELL_SIZE) * this.CELL_SIZE + this.CELL_SIZE / 2 + this.GRID_PADDING.left;
-      const snappedY = Math.floor((worldPoint.y - this.GRID_PADDING.top) / this.CELL_SIZE) * this.CELL_SIZE + this.CELL_SIZE / 2 + this.GRID_PADDING.top;
-      
-      // Check if click is within grid bounds
-      if (snappedX >= this.GRID_PADDING.left && 
-          snappedX <= this.GRID_WIDTH * this.CELL_SIZE + this.GRID_PADDING.left &&
-          snappedY >= this.GRID_PADDING.top && 
-          snappedY <= this.GRID_HEIGHT * this.CELL_SIZE + this.GRID_PADDING.top) {
-        
-        let unit;
-        if (this.selectedUnit === 'archer') {
-          unit = this.add.sprite(snappedX, snappedY, 'archer-idle', 0);
-          unit.play('archer-idle');
-        } else if (this.selectedUnit === 'warrior') {
-          unit = this.add.sprite(snappedX, snappedY, 'warrior-idle', 0);
-          unit.play('warrior-idle');
-        } else {
-          // Default red circle if no unit selected
-          unit = this.add.circle(snappedX, snappedY, this.CELL_SIZE / 3, 0xff0000, 0.5);
-        }
-        this.gameContainer.add(unit);
-      }
-    });
-
-    // Add camera controls
-    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-      const zoom = this.cameras.main.zoom;
-      if (deltaY > 0) {
-        this.cameras.main.setZoom(Math.max(0.5, zoom - 0.1));
-      } else {
-        this.cameras.main.setZoom(Math.min(2, zoom + 0.1));
-      }
     });
   }
 
@@ -118,7 +90,7 @@ export class Game extends Scene {
     const uiContainer = this.add.container(0, 0);
     uiContainer.setDepth(100);
     
-    // Add background panel for the unit selection menu at the bottom
+    // Add background panel
     const menuBg = this.add.rectangle(
       0, 
       this.scale.height - this.UI_HEIGHT, 
@@ -129,68 +101,112 @@ export class Game extends Scene {
     );
     menuBg.setOrigin(0, 0);
     
-    const BUTTON_PADDING = 50; // Padding from the left edge
-    const BUTTON_SPACING = 70; // Space between buttons
-    const BUTTON_SIZE = 50; // Size of the unit button
+    const BUTTON_PADDING = 50;
+    const BUTTON_SPACING = 70;
+    const BUTTON_SIZE = 50;
 
-    // Create archer button using the UnitButton component
-    const archerButton = new UnitButton(this, {
-      x: BUTTON_PADDING,
-      y: this.scale.height - this.UI_HEIGHT / 2,
-      size: BUTTON_SIZE,
-      color: 0x00ff00,
-      name: 'Archer',
-      onClick: (isSelected) => {
-        if (isSelected) {
-          // Deselect other buttons
-          this.unitButtons.forEach((button, key) => {
-            if (key !== 'archer' && button.isSelected) {
-              button.isSelected = false;
-              button.button.setStrokeStyle(0);
-            }
-          });
-          this.selectedUnit = 'archer';
-        } else {
-          this.selectedUnit = null;
-        }
-      }
-    });
-    archerButton.setDepth(101);
+    // Create gold counter
+    const goldText = this.resourceSystem.createGoldCounter(
+      this.scale.width - BUTTON_PADDING,
+      this.scale.height - this.UI_HEIGHT / 2
+    );
 
-    // Create warrior button using the UnitButton component
-    const warriorButton = new UnitButton(this, {
-      x: BUTTON_PADDING + BUTTON_SPACING,
-      y: this.scale.height - this.UI_HEIGHT / 2,
-      size: BUTTON_SIZE,
-      color: 0xff0000,
-      name: 'Warrior',
-      onClick: (isSelected) => {
-        if (isSelected) {
-          // Deselect other buttons
-          this.unitButtons.forEach((button, key) => {
-            if (key !== 'warrior' && button.isSelected) {
-              button.isSelected = false;
-              button.button.setStrokeStyle(0);
-            }
-          });
-          this.selectedUnit = 'warrior';
-        } else {
-          this.selectedUnit = null;
-        }
-      }
-    });
-    warriorButton.setDepth(101);
+    // Create unit buttons
+    const archerButton = this.createUnitButton('archer', BUTTON_PADDING, BUTTON_SPACING, BUTTON_SIZE);
+    const warriorButton = this.createUnitButton('warrior', BUTTON_PADDING + BUTTON_SPACING, BUTTON_SPACING, BUTTON_SIZE);
     
-    // Store buttons for future reference
-    this.unitButtons.set('archer', archerButton);
-    this.unitButtons.set('warrior', warriorButton);
-
-    // Add UI elements to the container
-    uiContainer.add([menuBg, archerButton.container, warriorButton.container]);
+    // Add UI elements to container
+    uiContainer.add([menuBg, goldText, archerButton.container, warriorButton.container]);
     
     // Set up UI camera to only show UI elements
     this.uiCamera.ignore(this.gameContainer);
     this.cameras.main.ignore(uiContainer);
+  }
+
+  createUnitButton(unitType, x, y, size) {
+    const button = new UnitButton(this, {
+      x: x,
+      y: this.scale.height - this.UI_HEIGHT / 2,
+      size: size,
+      color: unitType === 'archer' ? 0x00ff00 : 0xff0000,
+      name: `${unitType.charAt(0).toUpperCase() + unitType.slice(1)}\n(${this.resourceSystem.UNIT_COSTS[unitType]} gold)`,
+      onClick: (isSelected) => {
+        if (isSelected) {
+          if (this.resourceSystem.canAfford(unitType)) {
+            this.unitSystem.setSelectedUnit(unitType);
+          } else {
+            button.isSelected = false;
+            button.button.setStrokeStyle(0);
+            this.resourceSystem.showInsufficientGoldFeedback();
+          }
+        } else {
+          this.unitSystem.clearSelection();
+        }
+      }
+    });
+    button.setDepth(101);
+    return button;
+  }
+
+  setupInputHandlers() {
+    // Mouse move handler
+    this.input.on('pointermove', (pointer) => {
+      const selectedUnit = this.unitSystem.getSelectedUnit();
+      if (selectedUnit && !this.unitSystem.previewUnit) {
+        this.unitSystem.createPreviewUnit(selectedUnit, 0, 0);
+      }
+
+      if (this.unitSystem.previewUnit) {
+        const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+        const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
+        const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
+        
+        const isValidPosition = this.gridSystem.isValidGridPosition(gridX, gridY) &&
+                             this.gridSystem.getTerritoryAt(gridY) === 'player';
+        
+        this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
+      }
+    });
+
+    // Click handler
+    this.input.on('pointerdown', (pointer) => {
+      if (pointer.y > this.scale.height - this.UI_HEIGHT) return;
+
+      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
+      const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
+
+      if (this.gridSystem.isValidGridPosition(gridX, gridY)) {
+        const territory = this.gridSystem.getTerritoryAt(gridY);
+        const selectedUnit = this.unitSystem.getSelectedUnit();
+        
+        if (territory === 'player' && selectedUnit) {
+          if (this.resourceSystem.deductCost(selectedUnit)) {
+            this.unitSystem.placeUnit(selectedUnit, snappedX, snappedY);
+            this.unitSystem.clearSelection();
+          }
+        } else if (territory !== 'player') {
+          this.gridSystem.showInvalidPlacementFeedback(snappedX, snappedY);
+        }
+      }
+    });
+
+    // Right-click handler
+    this.input.on('pointerdown', (pointer) => {
+      if (pointer.rightButtonDown()) {
+        this.unitSystem.clearSelection();
+      }
+    });
+
+    // Zoom handler
+    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+      const zoom = this.cameras.main.zoom;
+      if (deltaY > 0) {
+        this.cameras.main.setZoom(Math.max(0.5, zoom - 0.1));
+      } else {
+        this.cameras.main.setZoom(Math.min(2, zoom + 0.1));
+      }
+    });
   }
 
   update() {
@@ -209,6 +225,82 @@ export class Game extends Scene {
     }
     if (this.wasd.down.isDown) {
       camera.scrollY += speed;
+    }
+  }
+
+  drawTerritories() {
+    const graphics = this.gridGraphics;
+    
+    // Calculate territory boundaries
+    const aiTerritoryY = this.GRID_PADDING.top;
+    const noMansLandY = this.GRID_PADDING.top + (this.TERRITORY_HEIGHT * this.CELL_SIZE);
+    const playerTerritoryY = noMansLandY + (this.NO_MANS_LAND_HEIGHT * this.CELL_SIZE);
+    
+    // Draw AI territory (top) - Light red
+    graphics.fillStyle(0xff0000, 0.1);
+    graphics.fillRect(
+      this.GRID_PADDING.left,
+      aiTerritoryY,
+      this.GRID_WIDTH * this.CELL_SIZE,
+      this.TERRITORY_HEIGHT * this.CELL_SIZE
+    );
+
+    // Draw no-man's land (middle) - Light yellow
+    graphics.fillStyle(0xffff00, 0.1);
+    graphics.fillRect(
+      this.GRID_PADDING.left,
+      noMansLandY,
+      this.GRID_WIDTH * this.CELL_SIZE,
+      this.NO_MANS_LAND_HEIGHT * this.CELL_SIZE
+    );
+
+    // Draw player territory (bottom) - Light blue
+    graphics.fillStyle(0x0000ff, 0.1);
+    graphics.fillRect(
+      this.GRID_PADDING.left,
+      playerTerritoryY,
+      this.GRID_WIDTH * this.CELL_SIZE,
+      this.TERRITORY_HEIGHT * this.CELL_SIZE
+    );
+
+    // Draw territory borders
+    graphics.lineStyle(2, 0xffffff, 0.8);
+    
+    // No-man's land borders
+    graphics.beginPath();
+    graphics.moveTo(this.GRID_PADDING.left, noMansLandY);
+    graphics.lineTo(this.GRID_PADDING.left + this.GRID_WIDTH * this.CELL_SIZE, noMansLandY);
+    graphics.moveTo(this.GRID_PADDING.left, playerTerritoryY);
+    graphics.lineTo(this.GRID_PADDING.left + this.GRID_WIDTH * this.CELL_SIZE, playerTerritoryY);
+    graphics.strokePath();
+  }
+
+  drawGridLines() {
+    this.gridGraphics.lineStyle(1, 0x666666, 0.8);
+
+    // Draw vertical lines
+    for (let x = 0; x <= this.GRID_WIDTH * this.CELL_SIZE; x += this.CELL_SIZE) {
+      this.gridGraphics.moveTo(x + this.GRID_PADDING.left, this.GRID_PADDING.top);
+      this.gridGraphics.lineTo(x + this.GRID_PADDING.left, this.GRID_HEIGHT * this.CELL_SIZE + this.GRID_PADDING.top);
+    }
+
+    // Draw horizontal lines
+    for (let y = 0; y <= this.GRID_HEIGHT * this.CELL_SIZE; y += this.CELL_SIZE) {
+      this.gridGraphics.moveTo(this.GRID_PADDING.left, y + this.GRID_PADDING.top);
+      this.gridGraphics.lineTo(this.GRID_WIDTH * this.CELL_SIZE + this.GRID_PADDING.left, y + this.GRID_PADDING.top);
+    }
+
+    this.gridGraphics.strokePath();
+  }
+
+  // Helper method to determine which territory a grid position is in
+  getTerritoryAt(gridY) {
+    if (gridY < this.TERRITORY_HEIGHT) {
+      return 'ai';
+    } else if (gridY >= this.TERRITORY_HEIGHT && gridY < this.TERRITORY_HEIGHT + this.NO_MANS_LAND_HEIGHT) {
+      return 'no-mans-land';
+    } else {
+      return 'player';
     }
   }
 }
