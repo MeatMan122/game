@@ -5,10 +5,12 @@ import { Archer } from "../units/Archer";
 export class UnitSystem {
     constructor(scene) {
         this.scene = scene;
-        this.selectedUnit = null;
+        // For tracking which unit type is ready for placement (from button selection)
+        this.activePlacementType = null;
+        // For tracking existing units/groups selected on the board
+        this.selectedUnitGroup = null;
         this.previewUnits = []; // Array to hold preview units
         this.unitButtons = new Map();
-        this.selectedUnitGroup = null;
         this.nextUnitId = 1;
         this.unitsById = new Map(); // Track all units by their ID
     }
@@ -122,19 +124,22 @@ export class UnitSystem {
 
             // Set up click handler
             unit.sprite.on('pointerdown', (pointer) => {
+                // DTB - I'm still trying to figure out how to handle the board state for this unit group. It seems clearing it is causing the unit to not be clickable again. so more work needs doing.
                 if (pointer.rightButtonDown()) return;
                 
                 const worldPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 const { snappedX, snappedY } = this.scene.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
                 
-                this.clearSelection();
+                // Clear unit selection but keep placement selection
+                this.clearUnitSelection();
                 
                 // Get the unit group using unit's current position
                 const unitPos = unit.getGridPosition();
                 const group = this.scene.boardSystem.getUnitGroup(unitPos.gridX, unitPos.gridY);
+                // What happens if we clear the boardstate for this unit group here?
                 if (group) {
                     this.selectedUnitGroup = group;
-                    this.selectedUnit = group.unitType;
+                    // Create preview for the selected group
                     this.createPreviewUnit(group.unitType, snappedX, snappedY);
                     // Set rotation to match the original group
                     this.previewUnits.forEach(previewUnit => {
@@ -184,30 +189,41 @@ export class UnitSystem {
         this.previewUnits = [];
     }
 
-    setSelectedUnit(unitType) {
-        if (this.selectedUnit && this.selectedUnit !== unitType) {
-            const prevButton = this.unitButtons.get(this.selectedUnit);
-            if (prevButton) {
-                prevButton.setSelected(false);
-            }
-        }
-        this.selectedUnit = unitType;
+    setActivePlacementType(unitType) {
+        this.activePlacementType = unitType;
+        this.clearUnitSelection(); // Clear any selected units on the board
+        
+        // Update UI buttons
+        this.unitButtons.forEach((button, type) => {
+            button.setSelected(type === unitType);
+        });
     }
 
-    getSelectedUnit() {
-        return this.selectedUnit;
+    getActivePlacementType() {
+        return this.activePlacementType;
+    }
+
+    clearPlacementSelection() {
+        this.activePlacementType = null;
+        this.clearPreview();
+        
+        // Update UI buttons
+        this.unitButtons.forEach(button => {
+            button.setSelected(false);
+        });
+    }
+
+    clearUnitSelection() {
+        this.selectedUnitGroup = null;
+    }
+
+    clearAllSelections() {
+        this.clearPlacementSelection();
+        this.clearUnitSelection();
     }
 
     clearSelection() {
-        if (this.selectedUnit) {
-            const button = this.unitButtons.get(this.selectedUnit);
-            if (button) {
-                button.setSelected(false);
-            }
-        }
-        this.selectedUnitGroup = null;
-        this.selectedUnit = null;
-        this.clearPreview();
+        this.clearAllSelections();
     }
 
     toggleRotation() {

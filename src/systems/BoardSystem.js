@@ -73,9 +73,7 @@ export class BoardSystem {
         const unit = this.getUnitAt(gridX, gridY);
         if (!unit) return null;
 
-        // Determine if the group is vertical or horizontal
-        const nextUnit = this.getUnitAt(gridX, gridY + 1);
-        const isVertical = nextUnit?.unitType === unit.unitType;
+        const isVertical = unit.isVertical;
 
         // Find the start of the group
         let startX = gridX;

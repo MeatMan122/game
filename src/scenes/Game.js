@@ -34,7 +34,6 @@ export class Game extends Scene {
     this.TERRITORY_HEIGHT = Math.floor((this.GRID_HEIGHT - this.NO_MANS_LAND_HEIGHT) / 2); // Height of each player's territory
     
     this.UI_HEIGHT = 100; // Height of the UI panel
-    this.selectedUnit = null; // Track which unit is selected for placement
     this.previewUnit = null; // Preview unit that follows cursor
     this.gridGraphics = null; // Graphics object for the grid
     this.unitButtons = new Map(); // Store unit buttons
@@ -67,10 +66,7 @@ export class Game extends Scene {
     // Set up input handlers
     this.setupInputHandlers();
 
-    // Add T key handler for unit rotation
-    this.input.keyboard.on('keydown-T', () => {
-      this.unitSystem.toggleRotation();
-    });
+    
   }
 
   setupCameras(worldSize) {
@@ -144,13 +140,13 @@ export class Game extends Scene {
       onClick: (isSelected) => {
         if (isSelected) {
           if (this.resourceSystem.canAfford(unitType)) {
-            this.unitSystem.setSelectedUnit(unitType);
+            this.unitSystem.setActivePlacementType(unitType);
           } else {
             button.setSelected(false);
             this.resourceSystem.showInsufficientGoldFeedback();
           }
         } else {
-          this.unitSystem.clearSelection();
+          this.unitSystem.clearPlacementSelection();
         }
       }
     });
@@ -162,11 +158,11 @@ export class Game extends Scene {
   setupInputHandlers() {
     // Mouse move handler
     this.input.on('pointermove', (pointer) => {
-      const selectedUnit = this.unitSystem.getSelectedUnit();
+      const placementType = this.unitSystem.getActivePlacementType();
       const selectedGroup = this.unitSystem.selectedUnitGroup;
       
-      if ((selectedUnit || selectedGroup) && !this.unitSystem.previewUnits.length) {
-        const unitType = selectedUnit || selectedGroup.unitType;
+      if ((placementType || selectedGroup) && !this.unitSystem.previewUnits.length) {
+        const unitType = placementType || selectedGroup.unitType;
         this.unitSystem.createPreviewUnit(unitType, 0, 0);
       }
 
@@ -175,18 +171,19 @@ export class Game extends Scene {
         const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
         const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
         
-        const unitType = selectedUnit || selectedGroup?.unitType;
+        const unitType = placementType || selectedGroup?.unitType;
         const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
+        const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
         
         // Check if all units in the line can be placed
         let isValidPosition = true;
         
         // Check grid boundaries and territory
         for (let i = 0; i < unitsPerPlacement; i++) {
-          const currentGridX = gridX + i;
-          if (!this.gridSystem.isValidGridPosition(currentGridX, gridY) || 
-              this.gridSystem.getTerritoryAt(gridY) !== 'player' ||
-              currentGridX >= this.GRID_WIDTH) {
+          const currentGridX = gridX + (isVertical ? 0 : i);
+          const currentGridY = gridY + (isVertical ? i : 0);
+          if (!this.gridSystem.isValidGridPosition(currentGridX, currentGridY) || 
+              this.gridSystem.getTerritoryAt(currentGridY) !== 'player') {
             isValidPosition = false;
             break;
           }
@@ -194,7 +191,12 @@ export class Game extends Scene {
 
         // Check if positions are available
         if (isValidPosition) {
-          isValidPosition = this.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement);
+          isValidPosition = this.boardSystem.arePositionsAvailable(
+            gridX, 
+            gridY, 
+            unitsPerPlacement, 
+            isVertical
+          );
         }
         
         this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
@@ -203,19 +205,21 @@ export class Game extends Scene {
 
     // Click handler
     this.input.on('pointerdown', (pointer) => {
+      console.log('1. pointerdown:', { pointer });
       if (pointer.y > this.scale.height - this.UI_HEIGHT) return;
 
       const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
       const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
       const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
 
-      const selectedUnit = this.unitSystem.getSelectedUnit();
+      const placementType = this.unitSystem.getActivePlacementType();
       const selectedGroup = this.unitSystem.selectedUnitGroup;
       
-      if (!selectedUnit && !selectedGroup) return;
+      if (!placementType && !selectedGroup) return;
 
-      const unitType = selectedUnit || selectedGroup.unitType;
+      const unitType = placementType || selectedGroup.unitType;
       const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
+      const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
       
       // Check if all units in the line can be placed
       let canPlace = true;
@@ -224,17 +228,22 @@ export class Game extends Scene {
       if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
         canPlace = false;
       } else {
-        canPlace = this.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement);
+        canPlace = this.boardSystem.arePositionsAvailable(
+          gridX, 
+          gridY, 
+          unitsPerPlacement, 
+          isVertical
+        );
       }
 
       if (canPlace) {
         if (selectedGroup) {
           // Move existing group
           this.unitSystem.moveSelectedGroup(snappedX, snappedY);
-        } else if (this.resourceSystem.deductCost(selectedUnit)) {
+        } else if (this.resourceSystem.deductCost(placementType)) {
           // Place new units
-          this.unitSystem.placeUnit(selectedUnit, snappedX, snappedY);
-          this.unitSystem.clearSelection();
+          this.unitSystem.placeUnit(placementType, snappedX, snappedY);
+          this.unitSystem.clearPlacementSelection();
         }
       } else {
         this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.previewUnits);
@@ -244,7 +253,7 @@ export class Game extends Scene {
     // Right-click handler
     this.input.on('pointerdown', (pointer) => {
       if (pointer.rightButtonDown()) {
-        this.unitSystem.clearSelection();
+        this.unitSystem.clearAllSelections(); // DTB - we need to override the default right-click behavior
       }
     });
 
@@ -256,6 +265,11 @@ export class Game extends Scene {
       } else {
         this.cameras.main.setZoom(Math.min(2, zoom + 0.1));
       }
+    });
+
+    // Add T key handler for unit rotation
+    this.input.keyboard.on('keydown-T', () => {
+      this.unitSystem.toggleRotation();
     });
   }
 
