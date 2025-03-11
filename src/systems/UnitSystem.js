@@ -159,7 +159,7 @@ export class UnitSystem {
         if (!this.scene.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
             return;
         }
-
+        
         // Remove group from old positions and destroy the units
         this.selectedUnitGroup.units.forEach(unit => {
             this.unitsById.delete(unit.id);
