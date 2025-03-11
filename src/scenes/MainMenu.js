@@ -21,7 +21,7 @@ export class MainMenu extends Scene {
 
     // Multiplayer Button
     const multiplayerButton = this.add
-      .text(512, 520, "Multiplayer", {
+      .text(512, 520, "VS AI", {
         fontFamily: "Arial Black",
         fontSize: 24,
         color: "#ffffff",

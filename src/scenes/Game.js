@@ -3,6 +3,7 @@ import { UnitButton } from "../ui/components/UnitButton";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
+import { BoardSystem } from "../systems/BoardSystem";
 import { UnitConfigs } from "../configs/UnitConfigs";
 
 export class Game extends Scene {
@@ -48,6 +49,7 @@ export class Game extends Scene {
     this.gridSystem = new GridSystem(this);
     this.resourceSystem = new ResourceSystem(this);
     this.unitSystem = new UnitSystem(this);
+    this.boardSystem = new BoardSystem(this);
 
     // Create game world container
     this.gameContainer = this.add.container(0, 0);
@@ -64,6 +66,11 @@ export class Game extends Scene {
 
     // Set up input handlers
     this.setupInputHandlers();
+
+    // Add T key handler for unit rotation
+    this.input.keyboard.on('keydown-T', () => {
+      this.unitSystem.toggleRotation();
+    });
   }
 
   setupCameras(worldSize) {
@@ -156,8 +163,11 @@ export class Game extends Scene {
     // Mouse move handler
     this.input.on('pointermove', (pointer) => {
       const selectedUnit = this.unitSystem.getSelectedUnit();
-      if (selectedUnit && !this.unitSystem.previewUnits.length) {
-        this.unitSystem.createPreviewUnit(selectedUnit, 0, 0);
+      const selectedGroup = this.unitSystem.selectedUnitGroup;
+      
+      if ((selectedUnit || selectedGroup) && !this.unitSystem.previewUnits.length) {
+        const unitType = selectedUnit || selectedGroup.unitType;
+        this.unitSystem.createPreviewUnit(unitType, 0, 0);
       }
 
       if (this.unitSystem.previewUnits.length > 0) {
@@ -165,8 +175,8 @@ export class Game extends Scene {
         const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
         const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
         
-        const selectedUnit = this.unitSystem.getSelectedUnit();
-        const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(selectedUnit);
+        const unitType = selectedUnit || selectedGroup?.unitType;
+        const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
         
         // Check if all units in the line can be placed
         let isValidPosition = true;
@@ -182,9 +192,9 @@ export class Game extends Scene {
           }
         }
 
-        // Check if positions are occupied
+        // Check if positions are available
         if (isValidPosition) {
-          isValidPosition = this.gridSystem.areGridPositionsAvailable(gridX, gridY, unitsPerPlacement);
+          isValidPosition = this.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement);
         }
         
         this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
@@ -200,41 +210,34 @@ export class Game extends Scene {
       const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
 
       const selectedUnit = this.unitSystem.getSelectedUnit();
-      if (!selectedUnit) return;
+      const selectedGroup = this.unitSystem.selectedUnitGroup;
+      
+      if (!selectedUnit && !selectedGroup) return;
 
-      const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(selectedUnit);
+      const unitType = selectedUnit || selectedGroup.unitType;
+      const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
       
       // Check if all units in the line can be placed
       let canPlace = true;
       
-      // Check grid boundaries and territory
-      for (let i = 0; i < unitsPerPlacement; i++) {
-        const currentGridX = gridX + i;
-        if (!this.gridSystem.isValidGridPosition(currentGridX, gridY) || 
-            this.gridSystem.getTerritoryAt(gridY) !== 'player' ||
-            currentGridX >= this.GRID_WIDTH) {
-          canPlace = false;
-          break;
-        }
-      }
-
-      // Check if positions are occupied
-      if (canPlace) {
-        canPlace = this.gridSystem.areGridPositionsAvailable(gridX, gridY, unitsPerPlacement);
+      // Check territory and available positions
+      if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
+        canPlace = false;
+      } else {
+        canPlace = this.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement);
       }
 
       if (canPlace) {
-        if (this.resourceSystem.deductCost(selectedUnit)) {
-          // Place units and mark their positions as occupied
+        if (selectedGroup) {
+          // Move existing group
+          this.unitSystem.moveSelectedGroup(snappedX, snappedY);
+        } else if (this.resourceSystem.deductCost(selectedUnit)) {
+          // Place new units
           this.unitSystem.placeUnit(selectedUnit, snappedX, snappedY);
-          for (let i = 0; i < unitsPerPlacement; i++) {
-            this.gridSystem.addUnit(gridX + i, gridY);
-          }
           this.unitSystem.clearSelection();
         }
       } else {
-        const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(selectedUnit);
-        this.gridSystem.showInvalidPlacementFeedback(snappedX, snappedY, unitsPerPlacement);
+        this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.previewUnits);
       }
     });
 
@@ -272,82 +275,6 @@ export class Game extends Scene {
     }
     if (this.wasd.down.isDown) {
       camera.scrollY += speed;
-    }
-  }
-
-  drawTerritories() {
-    const graphics = this.gridGraphics;
-    
-    // Calculate territory boundaries
-    const aiTerritoryY = this.GRID_PADDING.top;
-    const noMansLandY = this.GRID_PADDING.top + (this.TERRITORY_HEIGHT * this.CELL_SIZE);
-    const playerTerritoryY = noMansLandY + (this.NO_MANS_LAND_HEIGHT * this.CELL_SIZE);
-    
-    // Draw AI territory (top) - Light red
-    graphics.fillStyle(0xff0000, 0.1);
-    graphics.fillRect(
-      this.GRID_PADDING.left,
-      aiTerritoryY,
-      this.GRID_WIDTH * this.CELL_SIZE,
-      this.TERRITORY_HEIGHT * this.CELL_SIZE
-    );
-
-    // Draw no-man's land (middle) - Light yellow
-    graphics.fillStyle(0xffff00, 0.1);
-    graphics.fillRect(
-      this.GRID_PADDING.left,
-      noMansLandY,
-      this.GRID_WIDTH * this.CELL_SIZE,
-      this.NO_MANS_LAND_HEIGHT * this.CELL_SIZE
-    );
-
-    // Draw player territory (bottom) - Light blue
-    graphics.fillStyle(0x0000ff, 0.1);
-    graphics.fillRect(
-      this.GRID_PADDING.left,
-      playerTerritoryY,
-      this.GRID_WIDTH * this.CELL_SIZE,
-      this.TERRITORY_HEIGHT * this.CELL_SIZE
-    );
-
-    // Draw territory borders
-    graphics.lineStyle(2, 0xffffff, 0.8);
-    
-    // No-man's land borders
-    graphics.beginPath();
-    graphics.moveTo(this.GRID_PADDING.left, noMansLandY);
-    graphics.lineTo(this.GRID_PADDING.left + this.GRID_WIDTH * this.CELL_SIZE, noMansLandY);
-    graphics.moveTo(this.GRID_PADDING.left, playerTerritoryY);
-    graphics.lineTo(this.GRID_PADDING.left + this.GRID_WIDTH * this.CELL_SIZE, playerTerritoryY);
-    graphics.strokePath();
-  }
-
-  drawGridLines() {
-    this.gridGraphics.lineStyle(1, 0x666666, 0.8);
-
-    // Draw vertical lines
-    for (let x = 0; x <= this.GRID_WIDTH * this.CELL_SIZE; x += this.CELL_SIZE) {
-      this.gridGraphics.moveTo(x + this.GRID_PADDING.left, this.GRID_PADDING.top);
-      this.gridGraphics.lineTo(x + this.GRID_PADDING.left, this.GRID_HEIGHT * this.CELL_SIZE + this.GRID_PADDING.top);
-    }
-
-    // Draw horizontal lines
-    for (let y = 0; y <= this.GRID_HEIGHT * this.CELL_SIZE; y += this.CELL_SIZE) {
-      this.gridGraphics.moveTo(this.GRID_PADDING.left, y + this.GRID_PADDING.top);
-      this.gridGraphics.lineTo(this.GRID_WIDTH * this.CELL_SIZE + this.GRID_PADDING.left, y + this.GRID_PADDING.top);
-    }
-
-    this.gridGraphics.strokePath();
-  }
-
-  // Helper method to determine which territory a grid position is in
-  getTerritoryAt(gridY) {
-    if (gridY < this.TERRITORY_HEIGHT) {
-      return 'ai';
-    } else if (gridY >= this.TERRITORY_HEIGHT && gridY < this.TERRITORY_HEIGHT + this.NO_MANS_LAND_HEIGHT) {
-      return 'no-mans-land';
-    } else {
-      return 'player';
     }
   }
 }

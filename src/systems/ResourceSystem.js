@@ -1,7 +1,7 @@
 export class ResourceSystem {
     constructor(scene) {
         this.scene = scene;
-        this.STARTING_GOLD = 500;
+        this.STARTING_GOLD = 200;
         this.UNIT_COSTS = {
             archer: 50,
             warrior: 50
