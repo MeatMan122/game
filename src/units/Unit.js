@@ -3,8 +3,11 @@ export class Unit {
         this.scene = scene;
         this.unitType = unitType;
         this.id = null; // Will be set by UnitSystem
+        this.groupId = null; // Group identifier for units placed together
         this.sprite = null; // Will be set by createSprite
         this.isVertical = false;
+        this.gridX = null; // Current grid position X
+        this.gridY = null; // Current grid position Y
         
         // Create the sprite
         this.createSprite(x, y);
@@ -39,8 +42,20 @@ export class Unit {
 
     // Helper to get grid position
     getGridPosition() {
+        if (this.gridX !== null && this.gridY !== null) {
+            return { gridX: this.gridX, gridY: this.gridY };
+        }
         if (!this.sprite) return null;
-        return this.scene.gridSystem.worldToGrid(this.sprite.x, this.sprite.y);
+        const pos = this.scene.gridSystem.worldToGrid(this.sprite.x, this.sprite.y);
+        this.gridX = pos.gridX;
+        this.gridY = pos.gridY;
+        return pos;
+    }
+
+    // Update grid position
+    updateGridPosition(gridX, gridY) {
+        this.gridX = gridX;
+        this.gridY = gridY;
     }
 
     toggleRotation() {

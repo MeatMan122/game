@@ -99,6 +99,7 @@ export class UnitSystem {
             return null;
         }
 
+        const positions = [];
         // Create and place units based on rotation
         for (let i = 0; i < unitsPerPlacement; i++) {
             const unit = this.createUnitInstance(
@@ -115,16 +116,14 @@ export class UnitSystem {
             this.assignUnitId(unit);
             units.push(unit);
 
-            // Add to board state based on rotation
-            this.scene.boardSystem.addUnit(
-                unit.id,
-                gridX + (isVertical ? 0 : i),
-                gridY + (isVertical ? i : 0)
-            );
+            // Store position for group placement
+            positions.push({
+                gridX: gridX + (isVertical ? 0 : i),
+                gridY: gridY + (isVertical ? i : 0)
+            });
 
             // Set up click handler
             unit.sprite.on('pointerdown', (pointer) => {
-                // DTB - I'm still trying to figure out how to handle the board state for this unit group. It seems clearing it is causing the unit to not be clickable again. so more work needs doing.
                 if (pointer.rightButtonDown()) return;
                 
                 const worldPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
@@ -133,10 +132,9 @@ export class UnitSystem {
                 // Clear unit selection but keep placement selection
                 this.clearUnitSelection();
                 
-                // Get the unit group using unit's current position
-                const unitPos = unit.getGridPosition();
-                const group = this.scene.boardSystem.getUnitGroup(unitPos.gridX, unitPos.gridY);
-                // What happens if we clear the boardstate for this unit group here?
+                // Get the unit group using unit's groupId
+                const group = this.scene.boardSystem.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
+                
                 if (group) {
                     this.selectedUnitGroup = group;
                     // Create preview for the selected group
@@ -149,6 +147,9 @@ export class UnitSystem {
                 }
             });
         }
+
+        // Add the group to the board system
+        this.scene.boardSystem.addUnitGroup(units, positions);
 
         return units;
     }
@@ -165,14 +166,14 @@ export class UnitSystem {
             return;
         }
         
-        // Remove group from old positions and destroy the units
+        // Remove the group from the board state first
+        this.scene.boardSystem.removeUnitGroup(this.selectedUnitGroup);
+        
+        // Then destroy the units and clean up tracking
         this.selectedUnitGroup.units.forEach(unit => {
             this.unitsById.delete(unit.id);
             unit.destroy();
         });
-        
-        // Remove the group from the board state
-        this.scene.boardSystem.removeUnitGroup(this.selectedUnitGroup);
 
         // Place units at new positions
         this.placeUnit(this.selectedUnitGroup.unitType, x, y);

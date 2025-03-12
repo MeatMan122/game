@@ -6,9 +6,10 @@ export class BoardSystem {
         this.cellSize = scene.CELL_SIZE;
         
         // 2D array to store unit IDs at each grid position
-        this.boardState = Array(this.gridHeight).fill().map(() => 
-            Array(this.gridWidth).fill(null)
-        );
+        this.boardState = Array(this.gridHeight).fill(null)
+            .map(() => Array(this.gridWidth).fill(null));
+        this.nextGroupId = 1;
+        this.unitGroups = new Map(); // Map of groupId to array of unit IDs
     }
 
     // Add a unit to the board at the specified grid position
@@ -18,6 +19,11 @@ export class BoardSystem {
         // Check if position is already occupied
         if (this.boardState[gridY][gridX] !== null) return false;
         
+        const unit = this.scene.unitSystem.getUnitById(unitId);
+        if (unit) {
+            unit.updateGridPosition(gridX, gridY);
+        }
+        
         this.boardState[gridY][gridX] = unitId;
         return true;
     }
@@ -25,6 +31,14 @@ export class BoardSystem {
     // Remove a unit from the board at the specified grid position
     removeUnit(gridX, gridY) {
         if (!this.isValidGridPosition(gridX, gridY)) return false;
+        
+        const unitId = this.boardState[gridY][gridX];
+        if (unitId !== null) {
+            const unit = this.scene.unitSystem.getUnitById(unitId);
+            if (unit) {
+                unit.updateGridPosition(null, null);
+            }
+        }
         
         this.boardState[gridY][gridX] = null;
         return true;
@@ -73,59 +87,57 @@ export class BoardSystem {
         const unit = this.getUnitAt(gridX, gridY);
         if (!unit) return null;
 
-        const isVertical = unit.isVertical;
-
-        // Find the start of the group
-        let startX = gridX;
-        let startY = gridY;
-        
-        if (isVertical) {
-            while (startY > 0) {
-                const prevUnit = this.getUnitAt(startX, startY - 1);
-                if (!prevUnit || prevUnit.unitType !== unit.unitType) break;
-                startY--;
-            }
-        } else {
-            while (startX > 0) {
-                const prevUnit = this.getUnitAt(startX - 1, startY);
-                if (!prevUnit || prevUnit.unitType !== unit.unitType) break;
-                startX--;
-            }
+        // If the unit has a groupId, return all units in that group
+        if (unit.groupId !== null) {
+            const groupUnits = this.unitGroups.get(unit.groupId) || [];
+            return {
+                units: groupUnits.map(id => this.scene.unitSystem.getUnitById(id)),
+                unitType: unit.unitType,
+                gridPositions: groupUnits.map(id => {
+                    const u = this.scene.unitSystem.getUnitById(id);
+                    return u.getGridPosition();
+                }),
+                isVertical: unit.isVertical
+            };
         }
 
-        const group = {
-            units: [],
-            unitType: unit.unitType,
-            gridPositions: [],
-            isVertical
-        };
-
-        // Find all units in the line
-        let currentX = startX;
-        let currentY = startY;
-        while (isVertical ? currentY < this.gridHeight : currentX < this.gridWidth) {
-            const currentUnit = this.getUnitAt(currentX, currentY);
-            if (!currentUnit || currentUnit.unitType !== unit.unitType) break;
-            
-            group.units.push(currentUnit);
-            group.gridPositions.push({ x: currentX, y: currentY });
-            
-            if (isVertical) {
-                currentY++;
-            } else {
-                currentX++;
-            }
-        }
-
-        return group;
+        return null;
     }
 
-    // Remove an entire unit group from the board
+    // Add a group of units to the board
+    addUnitGroup(units, positions) {
+        const groupId = this.nextGroupId++;
+        const unitIds = [];
+
+        for (let i = 0; i < units.length; i++) {
+            const unit = units[i];
+            const pos = positions[i];
+            
+            unit.groupId = groupId;
+            this.addUnit(unit.id, pos.gridX, pos.gridY);
+            unitIds.push(unit.id);
+        }
+
+        this.unitGroups.set(groupId, unitIds);
+        return groupId;
+    }
+
+    // Remove a unit group from the board
     removeUnitGroup(group) {
-        if (!group) return false;
-        group.gridPositions.forEach(pos => {
-            this.removeUnit(pos.x, pos.y);
+        if (!group || group.units.length === 0) return false;
+        
+        const groupId = group.units[0].groupId;
+        if (groupId === null) return false;
+
+        // Remove all units in the group from the board state
+        group.units.forEach(unit => {
+            if (unit.gridX !== null && unit.gridY !== null) {
+                this.removeUnit(unit.gridX, unit.gridY);
+            }
         });
+
+        // Clear group tracking
+        this.unitGroups.delete(groupId);
         return true;
     }
 } 
