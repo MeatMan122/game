@@ -1,0 +1,16 @@
+---
+description: Responsibilities of the GridSystem
+globs: 
+alwaysApply: false
+---
+
+# The GridSystem is intended for managing the grid, which includes drawing, deriving locations on the grid for units to interpret, etc.
+
+- [GridSystem.js](mdc:src/systems/GridSystem.js) is where all GridSystem code should live
+- GridSystem provides coordinate translation services
+- All CRUD operations related to the GridSystem should live in [GridSystem.js](mdc:src/systems/GridSystem.js)
+- Responsible for grid-related calculations and visual representation
+- Provides coordinate translation services (world to grid, grid to world)
+- No unit state should be managed in the GridSystem
+- The GridSystem is the ultimate source of truth for finding positions on the grid, and is where many other objects, such as those in [Unit.js](mdc:src/units/Unit.js) will populate their initial positioning state.
+

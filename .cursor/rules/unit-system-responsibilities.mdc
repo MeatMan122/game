@@ -1,0 +1,12 @@
+---
+description: Respondibilities for the unit system
+globs: 
+alwaysApply: false
+---
+
+# The UnitSystem is responsible for all CRUD operations related to units and so that code should live in the UnitSystem.
+
+- [UnitSystem.js](mdc:src/systems/UnitSystem.js) is the UnitSystem's primary class
+- UnitSystem manages relationships between units and group behavior
+- The UnitSystem will have a lot of interaction with the various [Unit.js](mdc:src/units/Unit.js) objects and all objects that inherit from [Unit.js](mdc:src/units/Unit.js)
+- Any referencing of units throughout the code should happen directly through the unit itself or via state managed in the UnitSystem, unless it is unavailable in which case it should be fetched from the appropriate cooperating system (such as the GridSystem for deriving unit positions).

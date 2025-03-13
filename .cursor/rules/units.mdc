@@ -1,0 +1,12 @@
+---
+description: Responsibilities of Unit objects
+globs: 
+alwaysApply: false
+---
+
+# Unit's play an important role and will have a lot of state pertinent to their use. Keep Unit state in the Unit and any logic that can reasonably be said to belong to a single unit entity or its group should live here.
+
+- [Unit.js](mdc:src/units/Unit.js) is the main location for unit state and logic, all other unit classes in src/units should handle state or logic that is pertinent to that unit type alone.
+- Unit objects own their internal state
+- Prefer reading unit state, such as x/y coordinates, orientation, etc from the unit object (or any classes inheriting from unit) where they exist, rather than fetching them from other cooperating systems
+- If state is unavailable (such as positioning of a brand new unit) it should be fetched from the appropriate system (for positioning, the [GridSystem.js](mdc:src/systems/GridSystem.js) would be appropriate)
