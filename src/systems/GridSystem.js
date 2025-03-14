@@ -1,22 +1,8 @@
+import { GRID, TERRITORY, TERRITORY_COLORS, GRID_STYLE, ANIMATION } from '../configs/Constants';
+
 export class GridSystem {
     constructor(scene) {
         this.scene = scene;
-        this.CELL_SIZE = 32;
-        this.GRID_WIDTH = 75;
-        this.GRID_HEIGHT = 75;
-        this.BASE_PADDING = 120;
-        this.EXTRA_BOTTOM = 130;
-        
-        this.GRID_PADDING = {
-            top: this.BASE_PADDING,
-            right: this.BASE_PADDING,
-            bottom: this.BASE_PADDING + this.EXTRA_BOTTOM,
-            left: this.BASE_PADDING
-        };
-
-        this.NO_MANS_LAND_HEIGHT = 9;
-        this.TERRITORY_HEIGHT = Math.floor((this.GRID_HEIGHT - this.NO_MANS_LAND_HEIGHT) / 2);
-        
         this.gridGraphics = null;
     }
 
@@ -32,30 +18,30 @@ export class GridSystem {
 
     getWorldSize() {
         return {
-            width: this.CELL_SIZE * this.GRID_WIDTH + this.GRID_PADDING.left + this.GRID_PADDING.right,
-            height: this.CELL_SIZE * this.GRID_HEIGHT + this.GRID_PADDING.top + this.GRID_PADDING.bottom
+            width: GRID.CELL_SIZE * GRID.WIDTH + GRID.PADDING.LEFT + GRID.PADDING.RIGHT,
+            height: GRID.CELL_SIZE * GRID.HEIGHT + GRID.PADDING.TOP + GRID.PADDING.BOTTOM
         };
     }
 
     snapToGrid(worldX, worldY) {
-        const snappedX = Math.floor((worldX - this.GRID_PADDING.left) / this.CELL_SIZE) * this.CELL_SIZE + this.CELL_SIZE / 2 + this.GRID_PADDING.left;
-        const snappedY = Math.floor((worldY - this.GRID_PADDING.top) / this.CELL_SIZE) * this.CELL_SIZE + this.CELL_SIZE / 2 + this.GRID_PADDING.top;
+        const snappedX = Math.floor((worldX - GRID.PADDING.LEFT) / GRID.CELL_SIZE) * GRID.CELL_SIZE + GRID.CELL_SIZE / 2 + GRID.PADDING.LEFT;
+        const snappedY = Math.floor((worldY - GRID.PADDING.TOP) / GRID.CELL_SIZE) * GRID.CELL_SIZE + GRID.CELL_SIZE / 2 + GRID.PADDING.TOP;
         
         return { snappedX, snappedY };
     }
 
     worldToGrid(worldX, worldY) {
-        const gridX = Math.floor((worldX - this.GRID_PADDING.left) / this.CELL_SIZE);
-        const gridY = Math.floor((worldY - this.GRID_PADDING.top) / this.CELL_SIZE);
+        const gridX = Math.floor((worldX - GRID.PADDING.LEFT) / GRID.CELL_SIZE);
+        const gridY = Math.floor((worldY - GRID.PADDING.TOP) / GRID.CELL_SIZE);
         
         return { gridX, gridY };
     }
 
     isValidGridPosition(gridX, gridY) {
         return gridX >= 0 && 
-               gridX < this.GRID_WIDTH &&
+               gridX < GRID.WIDTH &&
                gridY >= 0 && 
-               gridY < this.GRID_HEIGHT;
+               gridY < GRID.HEIGHT;
     }
 
     // Check if a range of grid positions is available
@@ -73,9 +59,9 @@ export class GridSystem {
     }
 
     getTerritoryAt(gridY) {
-        if (gridY < this.TERRITORY_HEIGHT) {
+        if (gridY < TERRITORY.TERRITORY_HEIGHT) {
             return 'ai';
-        } else if (gridY >= this.TERRITORY_HEIGHT && gridY < this.TERRITORY_HEIGHT + this.NO_MANS_LAND_HEIGHT) {
+        } else if (gridY >= TERRITORY.TERRITORY_HEIGHT && gridY < TERRITORY.TERRITORY_HEIGHT + TERRITORY.NO_MANS_LAND_HEIGHT) {
             return 'no-mans-land';
         } else {
             return 'player';
@@ -86,62 +72,62 @@ export class GridSystem {
         const graphics = this.gridGraphics;
         
         // Calculate territory boundaries
-        const aiTerritoryY = this.GRID_PADDING.top;
-        const noMansLandY = this.GRID_PADDING.top + (this.TERRITORY_HEIGHT * this.CELL_SIZE);
-        const playerTerritoryY = noMansLandY + (this.NO_MANS_LAND_HEIGHT * this.CELL_SIZE);
+        const aiTerritoryY = GRID.PADDING.TOP;
+        const noMansLandY = GRID.PADDING.TOP + (TERRITORY.TERRITORY_HEIGHT * GRID.CELL_SIZE);
+        const playerTerritoryY = noMansLandY + (TERRITORY.NO_MANS_LAND_HEIGHT * GRID.CELL_SIZE);
         
-        // Draw AI territory (top) - Light red
-        graphics.fillStyle(0xff0000, 0.1);
+        // Draw AI territory (top)
+        graphics.fillStyle(TERRITORY_COLORS.AI.color, TERRITORY_COLORS.AI.alpha);
         graphics.fillRect(
-            this.GRID_PADDING.left,
+            GRID.PADDING.LEFT,
             aiTerritoryY,
-            this.GRID_WIDTH * this.CELL_SIZE,
-            this.TERRITORY_HEIGHT * this.CELL_SIZE
+            GRID.WIDTH * GRID.CELL_SIZE,
+            TERRITORY.TERRITORY_HEIGHT * GRID.CELL_SIZE
         );
 
-        // Draw no-man's land (middle) - Light yellow
-        graphics.fillStyle(0xffff00, 0.1);
+        // Draw no-man's land (middle)
+        graphics.fillStyle(TERRITORY_COLORS.NO_MANS_LAND.color, TERRITORY_COLORS.NO_MANS_LAND.alpha);
         graphics.fillRect(
-            this.GRID_PADDING.left,
+            GRID.PADDING.LEFT,
             noMansLandY,
-            this.GRID_WIDTH * this.CELL_SIZE,
-            this.NO_MANS_LAND_HEIGHT * this.CELL_SIZE
+            GRID.WIDTH * GRID.CELL_SIZE,
+            TERRITORY.NO_MANS_LAND_HEIGHT * GRID.CELL_SIZE
         );
 
-        // Draw player territory (bottom) - Light blue
-        graphics.fillStyle(0x0000ff, 0.1);
+        // Draw player territory (bottom)
+        graphics.fillStyle(TERRITORY_COLORS.PLAYER.color, TERRITORY_COLORS.PLAYER.alpha);
         graphics.fillRect(
-            this.GRID_PADDING.left,
+            GRID.PADDING.LEFT,
             playerTerritoryY,
-            this.GRID_WIDTH * this.CELL_SIZE,
-            this.TERRITORY_HEIGHT * this.CELL_SIZE
+            GRID.WIDTH * GRID.CELL_SIZE,
+            TERRITORY.TERRITORY_HEIGHT * GRID.CELL_SIZE
         );
 
         // Draw territory borders
-        graphics.lineStyle(2, 0xffffff, 0.8);
+        graphics.lineStyle(GRID_STYLE.TERRITORY_BORDER_WIDTH, GRID_STYLE.TERRITORY_BORDER_COLOR, GRID_STYLE.TERRITORY_BORDER_ALPHA);
         
         // No-man's land borders
         graphics.beginPath();
-        graphics.moveTo(this.GRID_PADDING.left, noMansLandY);
-        graphics.lineTo(this.GRID_PADDING.left + this.GRID_WIDTH * this.CELL_SIZE, noMansLandY);
-        graphics.moveTo(this.GRID_PADDING.left, playerTerritoryY);
-        graphics.lineTo(this.GRID_PADDING.left + this.GRID_WIDTH * this.CELL_SIZE, playerTerritoryY);
+        graphics.moveTo(GRID.PADDING.LEFT, noMansLandY);
+        graphics.lineTo(GRID.PADDING.LEFT + GRID.WIDTH * GRID.CELL_SIZE, noMansLandY);
+        graphics.moveTo(GRID.PADDING.LEFT, playerTerritoryY);
+        graphics.lineTo(GRID.PADDING.LEFT + GRID.WIDTH * GRID.CELL_SIZE, playerTerritoryY);
         graphics.strokePath();
     }
 
     drawGridLines() {
-        this.gridGraphics.lineStyle(1, 0x666666, 0.8);
+        this.gridGraphics.lineStyle(GRID_STYLE.LINE_WIDTH, GRID_STYLE.LINE_COLOR, GRID_STYLE.LINE_ALPHA);
 
         // Draw vertical lines
-        for (let x = 0; x <= this.GRID_WIDTH * this.CELL_SIZE; x += this.CELL_SIZE) {
-            this.gridGraphics.moveTo(x + this.GRID_PADDING.left, this.GRID_PADDING.top);
-            this.gridGraphics.lineTo(x + this.GRID_PADDING.left, this.GRID_HEIGHT * this.CELL_SIZE + this.GRID_PADDING.top);
+        for (let x = 0; x <= GRID.WIDTH * GRID.CELL_SIZE; x += GRID.CELL_SIZE) {
+            this.gridGraphics.moveTo(x + GRID.PADDING.LEFT, GRID.PADDING.TOP);
+            this.gridGraphics.lineTo(x + GRID.PADDING.LEFT, GRID.HEIGHT * GRID.CELL_SIZE + GRID.PADDING.TOP);
         }
 
         // Draw horizontal lines
-        for (let y = 0; y <= this.GRID_HEIGHT * this.CELL_SIZE; y += this.CELL_SIZE) {
-            this.gridGraphics.moveTo(this.GRID_PADDING.left, y + this.GRID_PADDING.top);
-            this.gridGraphics.lineTo(this.GRID_WIDTH * this.CELL_SIZE + this.GRID_PADDING.left, y + this.GRID_PADDING.top);
+        for (let y = 0; y <= GRID.HEIGHT * GRID.CELL_SIZE; y += GRID.CELL_SIZE) {
+            this.gridGraphics.moveTo(GRID.PADDING.LEFT, y + GRID.PADDING.TOP);
+            this.gridGraphics.lineTo(GRID.WIDTH * GRID.CELL_SIZE + GRID.PADDING.LEFT, y + GRID.PADDING.TOP);
         }
 
         this.gridGraphics.strokePath();
@@ -152,8 +138,8 @@ export class GridSystem {
             const feedback = this.scene.add.rectangle(
                 unit.sprite.x, 
                 unit.sprite.y, 
-                this.CELL_SIZE, 
-                this.CELL_SIZE, 
+                GRID.CELL_SIZE, 
+                GRID.CELL_SIZE, 
                 0xff0000, 
                 0.3
             );
@@ -161,7 +147,7 @@ export class GridSystem {
             this.scene.tweens.add({
                 targets: feedback,
                 alpha: 0,
-                duration: 300,
+                duration: ANIMATION.FEEDBACK_DURATION,
                 onComplete: () => feedback.destroy()
             });
         });
