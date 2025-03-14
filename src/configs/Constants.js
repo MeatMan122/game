@@ -14,7 +14,11 @@ export const GRID = {
 
 export const TERRITORY = {
     NO_MANS_LAND_HEIGHT: 9,
-    TERRITORY_HEIGHT: 33 // Math.floor((GRID.HEIGHT - NO_MANS_LAND_HEIGHT) / 2)
+    TERRITORY_HEIGHT: 33, // Math.floor((GRID.HEIGHT - NO_MANS_LAND_HEIGHT) / 2)
+    DEPLOYMENT_ZONE: {
+        SIZE: 21,
+        PADDING: 27 // (GRID.WIDTH - SIZE) / 2
+    }
 };
 
 export const UI = {
@@ -27,7 +31,23 @@ export const UI = {
 };
 
 export const RESOURCES = {
-    STARTING_GOLD: 500
+    STARTING_GOLD: 500,
+    DISPLAY: {
+        FONT_SIZE: '24px',
+        COLOR: '#FFD700',
+        FONT_STYLE: 'bold',
+        PADDING: 10
+    },
+    FEEDBACK: {
+        COLOR: 0xff0000,
+        ALPHA: 0.3,
+        SHAKE: {
+            OFFSET: 5,
+            DURATION: 50,
+            REPEATS: 2
+        },
+        FADE_DURATION: 300
+    }
 };
 
 export const CAMERA = {
@@ -42,9 +62,10 @@ export const ANIMATION = {
 };
 
 export const TERRITORY_COLORS = {
-    AI: { color: 0xff0000, alpha: 0.1 },
+    OPPONENT: { color: 0xff0000, alpha: 0.1 },
     NO_MANS_LAND: { color: 0xffff00, alpha: 0.1 },
-    PLAYER: { color: 0x0000ff, alpha: 0.1 }
+    PLAYER: { color: 0x0000ff, alpha: 0.1 },
+    DEPLOYMENT: { color: 0x00ff00, alpha: 0.2 }
 };
 
 export const GRID_STYLE = {
@@ -54,4 +75,34 @@ export const GRID_STYLE = {
     TERRITORY_BORDER_WIDTH: 2,
     TERRITORY_BORDER_COLOR: 0xffffff,
     TERRITORY_BORDER_ALPHA: 0.8
+};
+
+export const UNIT = {
+    PREVIEW: {
+        VALID_ALPHA: 0.6,
+        INVALID_ALPHA: 0.2
+    },
+    FEEDBACK: {
+        COLOR: 0xff0000,
+        ALPHA: 0.3
+    }
+};
+
+export const GAME = {
+    BACKGROUND_COLOR: '#028af8',
+    UI: {
+        MENU: {
+            DEPTH: 100,
+            BACKGROUND: {
+                COLOR: 0x333333,
+                ALPHA: 0.8
+            }
+        },
+        BUTTON: {
+            DEPTH: 101
+        }
+    },
+    DEBUG: {
+        LOG_DEBOUNCE: 2000
+    }
 }; 

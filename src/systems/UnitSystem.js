@@ -1,4 +1,5 @@
-import { UnitConfigs } from "../configs/UnitConfigs";
+import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
+import { GRID, UNIT } from "../configs/Constants";
 import { Warrior } from "../units/Warrior";
 import { Archer } from "../units/Archer";
 
@@ -22,15 +23,15 @@ export class UnitSystem {
     }
 
     getUnitsPerPlacement(unitType) {
-        return UnitConfigs.getUnitsPerPlacement(unitType);
+        return UNIT_CONFIGS[unitType].unitsPerPlacement;
     }
 
     // Helper to create the appropriate unit type
     createUnitInstance(unitType, x, y) {
         switch(unitType) {
-            case 'warrior':
+            case UNIT_TYPES.WARRIOR:
                 return new Warrior(this.scene, x, y);
-            case 'archer':
+            case UNIT_TYPES.ARCHER:
                 return new Archer(this.scene, x, y);
             default:
                 console.error('Unknown unit type:', unitType);
@@ -67,7 +68,7 @@ export class UnitSystem {
         for (let i = 0; i < unitsPerPlacement; i++) {
             const previewUnit = this.createUnitInstance(
                 unitType,
-                x + (i * this.scene.CELL_SIZE), // Start horizontal by default
+                x + (i * GRID.CELL_SIZE), // Start horizontal by default
                 y
             );
             
@@ -82,10 +83,10 @@ export class UnitSystem {
         this.previewUnits.forEach((unit, index) => {
             if (unit) {
                 unit.setPosition(
-                    x + (unit.isVertical ? 0 : index * this.scene.CELL_SIZE),
-                    y + (unit.isVertical ? index * this.scene.CELL_SIZE : 0)
+                    x + (unit.isVertical ? 0 : index * GRID.CELL_SIZE),
+                    y + (unit.isVertical ? index * GRID.CELL_SIZE : 0)
                 );
-                unit.setAlpha(isValidPosition ? 0.6 : 0.2);
+                unit.setAlpha(isValidPosition ? UNIT.PREVIEW.VALID_ALPHA : UNIT.PREVIEW.INVALID_ALPHA);
             }
         });
     }
@@ -109,8 +110,8 @@ export class UnitSystem {
         for (let i = 0; i < unitsPerPlacement; i++) {
             const unit = this.createUnitInstance(
                 unitType,
-                x + (isVertical ? 0 : i * this.scene.CELL_SIZE),
-                y + (isVertical ? i * this.scene.CELL_SIZE : 0)
+                x + (isVertical ? 0 : i * GRID.CELL_SIZE),
+                y + (isVertical ? i * GRID.CELL_SIZE : 0)
             );
 
             if (!unit) continue;

@@ -3,43 +3,15 @@ import { UnitButton } from "../ui/components/UnitButton";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
-import { UnitConfigs } from "../configs/UnitConfigs";
+import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
+import { GRID, UI, TERRITORY, GAME, CAMERA } from "../configs/Constants";
 
 export class Game extends Scene {
   constructor() {
     super("Game");
-    this.CELL_SIZE = 32; // Size of each grid cell in pixels
-    
-    // Calculate grid dimensions based on available space and desired aspect ratio
-    const BASE_PADDING = 120; // Base padding value
-    const EXTRA_BOTTOM = 130; // Additional bottom padding for UI (250 - 120)
-    
-    this.GRID_WIDTH = 75; // Number of cells horizontally
-    this.GRID_HEIGHT = 75; // Number of cells vertically
-    this.GRID_PADDING = {
-      top: BASE_PADDING,
-      right: BASE_PADDING,
-      bottom: BASE_PADDING + EXTRA_BOTTOM,
-      left: BASE_PADDING
-    };
-
-    // UI constants
-    this.BUTTON_PADDING = 50;
-    this.BUTTON_SPACING = 70;
-    this.BUTTON_SIZE = 50;
-
-    // Territory constants
-    this.NO_MANS_LAND_HEIGHT = 9; // Height of no-man's land in cells
-    this.TERRITORY_HEIGHT = Math.floor((this.GRID_HEIGHT - this.NO_MANS_LAND_HEIGHT) / 2); // Height of each player's territory
-    
-    this.UI_HEIGHT = 100; // Height of the UI panel
-    this.previewUnit = null; // Preview unit that follows cursor
-    this.gridGraphics = null; // Graphics object for the grid
-    this.unitButtons = new Map(); // Store unit buttons
-    
-    // Resource management
-    this.STARTING_GOLD = 500;
-    this.gold = this.STARTING_GOLD;
+    this.previewUnit = null;
+    this.gridGraphics = null;
+    this.unitButtons = new Map();
   }
 
   create() {
@@ -67,10 +39,24 @@ export class Game extends Scene {
 
   setupCameras(worldSize) {
     // Set up the main camera
-    this.cameras.main.setBackgroundColor('#028af8');
+    this.cameras.main.setBackgroundColor(GAME.BACKGROUND_COLOR);
     this.cameras.main.setBounds(0, 0, worldSize.width, worldSize.height);
-    this.cameras.main.setZoom(1);
-    this.cameras.main.centerOn(worldSize.width / 2, worldSize.height / 2);
+    
+    // Set initial zoom to 0.75 (25% zoomed out from default)
+    this.cameras.main.setZoom(0.75);
+
+    // Calculate player deployment zone center
+    const deploymentZoneX = GRID.PADDING.LEFT + (TERRITORY.DEPLOYMENT_ZONE.PADDING + TERRITORY.DEPLOYMENT_ZONE.SIZE / 2) * GRID.CELL_SIZE;
+    const playerTerritoryY = GRID.PADDING.TOP + (TERRITORY.TERRITORY_HEIGHT * 2 + TERRITORY.NO_MANS_LAND_HEIGHT) * GRID.CELL_SIZE;
+    const deploymentZoneY = playerTerritoryY + (TERRITORY.TERRITORY_HEIGHT - TERRITORY.DEPLOYMENT_ZONE.SIZE) / 2 * GRID.CELL_SIZE;
+    
+    // Adjust Y position to account for the camera height at current zoom and UI space
+    const cameraHeight = this.scale.height / 0.75; // height in world pixels at current zoom
+    const yOffset = cameraHeight * 0.8; // move camera up by 80% of its height
+    const uiOffset = UI.PANEL_HEIGHT * 1.65; // offset to account for UI space
+    
+    // Center camera on player's deployment zone with offset
+    this.cameras.main.centerOn(deploymentZoneX, deploymentZoneY - yOffset + uiOffset);
 
     // Create UI camera
     this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
@@ -89,23 +75,23 @@ export class Game extends Scene {
   createUnitSelectionMenu() {
     // Create a container for UI elements
     const uiContainer = this.add.container(0, 0);
-    uiContainer.setDepth(100);
+    uiContainer.setDepth(GAME.UI.MENU.DEPTH);
     
     // Add background panel
     const menuBg = this.add.rectangle(
       0, 
-      this.scale.height - this.UI_HEIGHT, 
+      this.scale.height - UI.PANEL_HEIGHT, 
       this.scale.width, 
-      this.UI_HEIGHT, 
-      0x333333, 
-      0.8
+      UI.PANEL_HEIGHT, 
+      GAME.UI.MENU.BACKGROUND.COLOR, 
+      GAME.UI.MENU.BACKGROUND.ALPHA
     );
     menuBg.setOrigin(0, 0);
     
     // Create gold counter
     const goldText = this.resourceSystem.createGoldCounter(
-      this.scale.width - this.BUTTON_PADDING,
-      this.scale.height - this.UI_HEIGHT / 2
+      this.scale.width - UI.BUTTON.PADDING,
+      this.scale.height - UI.PANEL_HEIGHT / 2
     );
 
     // Add base UI elements
@@ -120,8 +106,8 @@ export class Game extends Scene {
   }
 
   createButtons(uiContainer) {
-    this.ArcherButton = this.createUnitButton('archer', this.BUTTON_PADDING, this.BUTTON_SPACING, this.BUTTON_SIZE);
-    this.warriorButton = this.createUnitButton('warrior', this.BUTTON_PADDING + this.BUTTON_SPACING, this.BUTTON_SPACING, this.BUTTON_SIZE);
+    this.ArcherButton = this.createUnitButton(UNIT_TYPES.ARCHER, UI.BUTTON.PADDING, UI.BUTTON.SPACING, UI.BUTTON.SIZE);
+    this.warriorButton = this.createUnitButton(UNIT_TYPES.WARRIOR, UI.BUTTON.PADDING + UI.BUTTON.SPACING, UI.BUTTON.SPACING, UI.BUTTON.SIZE);
     
     uiContainer.add([this.ArcherButton.container, this.warriorButton.container]);
   }
@@ -129,10 +115,10 @@ export class Game extends Scene {
   createUnitButton(unitType, x, y, size) {
     const button = new UnitButton(this, {
       x: x,
-      y: this.scale.height - this.UI_HEIGHT / 2,
+      y: this.scale.height - UI.PANEL_HEIGHT / 2,
       size: size,
-      color: UnitConfigs.getColor(unitType),
-      name: `${unitType}\n(${UnitConfigs.getCost(unitType)} gold)`,
+      color: UNIT_CONFIGS[unitType].color,
+      name: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
       onClick: (isSelected) => {
         console.log('1. Unit Button Clicked:', { unitType, isSelected });
         if (isSelected) {
@@ -150,7 +136,7 @@ export class Game extends Scene {
         }
       }
     });
-    button.setDepth(101);
+    button.setDepth(GAME.UI.BUTTON.DEPTH);
     this.unitSystem.registerButton(unitType, button);
     return button;
   }
@@ -160,7 +146,7 @@ export class Game extends Scene {
     let lastLog = 0;
     const debouncedLog = (message, data) => {
       const now = Date.now();
-      if (now - lastLog > 2000) {
+      if (now - lastLog > GAME.DEBUG.LOG_DEBOUNCE) {
         console.log(message, data);
         lastLog = now;
       }
@@ -183,7 +169,7 @@ export class Game extends Scene {
         const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
         
         const unitType = placementType || selectedGroup?.unitType;
-        const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
+        const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
         const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
         
         // Check if all units in the line can be placed
@@ -217,7 +203,7 @@ export class Game extends Scene {
 
     // Click handler
     this.input.on('pointerdown', (pointer) => {
-      if (pointer.y > this.scale.height - this.UI_HEIGHT) return;
+      if (pointer.y > this.scale.height - UI.PANEL_HEIGHT) return;
 
       const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
       const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
@@ -231,7 +217,7 @@ export class Game extends Scene {
       console.log('5. Attempting to place unit:', { placementType, gridX, gridY });
 
       const unitType = placementType || selectedGroup.unitType;
-      const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
+      const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
       const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
       
       // Check if all units in the line can be placed
@@ -269,7 +255,7 @@ export class Game extends Scene {
     // Right-click handler
     this.input.on('pointerdown', (pointer) => {
       if (pointer.rightButtonDown()) {
-        this.unitSystem.clearAllSelections(); // DTB - we need to override the default right-click behavior
+        this.unitSystem.clearAllSelections();
       }
     });
 
@@ -277,9 +263,9 @@ export class Game extends Scene {
     this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
       const zoom = this.cameras.main.zoom;
       if (deltaY > 0) {
-        this.cameras.main.setZoom(Math.max(0.5, zoom - 0.1));
+        this.cameras.main.setZoom(Math.max(CAMERA.MIN_ZOOM, zoom - CAMERA.ZOOM_STEP));
       } else {
-        this.cameras.main.setZoom(Math.min(2, zoom + 0.1));
+        this.cameras.main.setZoom(Math.min(CAMERA.MAX_ZOOM, zoom + CAMERA.ZOOM_STEP));
       }
     });
 
@@ -292,19 +278,18 @@ export class Game extends Scene {
   update() {
     // Camera movement with WASD keys
     const camera = this.cameras.main;
-    const speed = 16;
 
     if (this.wasd.left.isDown) {
-      camera.scrollX -= speed;
+      camera.scrollX -= CAMERA.MOVE_SPEED;
     }
     if (this.wasd.right.isDown) {
-      camera.scrollX += speed;
+      camera.scrollX += CAMERA.MOVE_SPEED;
     }
     if (this.wasd.up.isDown) {
-      camera.scrollY -= speed;
+      camera.scrollY -= CAMERA.MOVE_SPEED;
     }
     if (this.wasd.down.isDown) {
-      camera.scrollY += speed;
+      camera.scrollY += CAMERA.MOVE_SPEED;
     }
   }
 }

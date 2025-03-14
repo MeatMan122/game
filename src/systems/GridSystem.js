@@ -60,7 +60,7 @@ export class GridSystem {
 
     getTerritoryAt(gridY) {
         if (gridY < TERRITORY.TERRITORY_HEIGHT) {
-            return 'ai';
+            return 'opponent';
         } else if (gridY >= TERRITORY.TERRITORY_HEIGHT && gridY < TERRITORY.TERRITORY_HEIGHT + TERRITORY.NO_MANS_LAND_HEIGHT) {
             return 'no-mans-land';
         } else {
@@ -72,15 +72,15 @@ export class GridSystem {
         const graphics = this.gridGraphics;
         
         // Calculate territory boundaries
-        const aiTerritoryY = GRID.PADDING.TOP;
+        const opponentTerritoryY = GRID.PADDING.TOP;
         const noMansLandY = GRID.PADDING.TOP + (TERRITORY.TERRITORY_HEIGHT * GRID.CELL_SIZE);
         const playerTerritoryY = noMansLandY + (TERRITORY.NO_MANS_LAND_HEIGHT * GRID.CELL_SIZE);
         
-        // Draw AI territory (top)
-        graphics.fillStyle(TERRITORY_COLORS.AI.color, TERRITORY_COLORS.AI.alpha);
+        // Draw opponent territory (top)
+        graphics.fillStyle(TERRITORY_COLORS.OPPONENT.color, TERRITORY_COLORS.OPPONENT.alpha);
         graphics.fillRect(
             GRID.PADDING.LEFT,
-            aiTerritoryY,
+            opponentTerritoryY,
             GRID.WIDTH * GRID.CELL_SIZE,
             TERRITORY.TERRITORY_HEIGHT * GRID.CELL_SIZE
         );
@@ -101,6 +101,29 @@ export class GridSystem {
             playerTerritoryY,
             GRID.WIDTH * GRID.CELL_SIZE,
             TERRITORY.TERRITORY_HEIGHT * GRID.CELL_SIZE
+        );
+
+        // Draw deployment zones
+        const deploymentZoneWidth = TERRITORY.DEPLOYMENT_ZONE.SIZE * GRID.CELL_SIZE;
+        const deploymentZoneX = GRID.PADDING.LEFT + (TERRITORY.DEPLOYMENT_ZONE.PADDING * GRID.CELL_SIZE);
+
+        // opponent deployment zone (centered in opponent territory)
+        const opponentDeploymentY = opponentTerritoryY + ((TERRITORY.TERRITORY_HEIGHT - TERRITORY.DEPLOYMENT_ZONE.SIZE) / 2) * GRID.CELL_SIZE;
+        graphics.fillStyle(TERRITORY_COLORS.DEPLOYMENT.color, TERRITORY_COLORS.DEPLOYMENT.alpha);
+        graphics.fillRect(
+            deploymentZoneX,
+            opponentDeploymentY,
+            deploymentZoneWidth,
+            deploymentZoneWidth
+        );
+
+        // Player deployment zone (centered in player territory)
+        const playerDeploymentY = playerTerritoryY + ((TERRITORY.TERRITORY_HEIGHT - TERRITORY.DEPLOYMENT_ZONE.SIZE) / 2) * GRID.CELL_SIZE;
+        graphics.fillRect(
+            deploymentZoneX,
+            playerDeploymentY,
+            deploymentZoneWidth,
+            deploymentZoneWidth
         );
 
         // Draw territory borders

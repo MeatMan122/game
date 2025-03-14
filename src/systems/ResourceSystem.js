@@ -1,12 +1,10 @@
+import { RESOURCES } from '../configs/Constants';
+import { UNIT_CONFIGS } from '../configs/UnitConfigs';
+
 export class ResourceSystem {
     constructor(scene) {
         this.scene = scene;
-        this.STARTING_GOLD = 200;
-        this.UNIT_COSTS = {
-            archer: 50,
-            warrior: 50
-        };
-        this.gold = this.STARTING_GOLD;
+        this.gold = RESOURCES.STARTING_GOLD;
         this.goldText = null;
     }
 
@@ -16,9 +14,9 @@ export class ResourceSystem {
             y,
             `Gold: ${this.gold}`,
             {
-                fontSize: '24px',
-                color: '#FFD700',
-                fontStyle: 'bold'
+                fontSize: RESOURCES.DISPLAY.FONT_SIZE,
+                color: RESOURCES.DISPLAY.COLOR,
+                fontStyle: RESOURCES.DISPLAY.FONT_STYLE
             }
         );
         this.goldText.setOrigin(1, 0.5);
@@ -26,12 +24,12 @@ export class ResourceSystem {
     }
 
     canAfford(unitType) {
-        return this.gold >= this.UNIT_COSTS[unitType];
+        return this.gold >= UNIT_CONFIGS[unitType].cost;
     }
 
     deductCost(unitType) {
         if (this.canAfford(unitType)) {
-            this.gold -= this.UNIT_COSTS[unitType];
+            this.gold -= UNIT_CONFIGS[unitType].cost;
             this.updateGoldDisplay();
             return true;
         }
@@ -46,32 +44,32 @@ export class ResourceSystem {
 
     showInsufficientGoldFeedback() {
         const bounds = this.goldText.getBounds();
-        const padding = 10;
+        const padding = RESOURCES.DISPLAY.PADDING;
         
         const feedback = this.scene.add.rectangle(
             bounds.centerX,
             bounds.centerY,
             bounds.width + padding * 2,
             bounds.height + padding * 2,
-            0xff0000,
-            0.3
+            RESOURCES.FEEDBACK.COLOR,
+            RESOURCES.FEEDBACK.ALPHA
         );
         feedback.setDepth(102);
 
         // Add a shake effect to the gold text
         this.scene.tweens.add({
             targets: this.goldText,
-            x: this.goldText.x - 5,
-            duration: 50,
+            x: this.goldText.x - RESOURCES.FEEDBACK.SHAKE.OFFSET,
+            duration: RESOURCES.FEEDBACK.SHAKE.DURATION,
             yoyo: true,
-            repeat: 2
+            repeat: RESOURCES.FEEDBACK.SHAKE.REPEATS
         });
 
         // Fade out the feedback rectangle
         this.scene.tweens.add({
             targets: feedback,
             alpha: 0,
-            duration: 300,
+            duration: RESOURCES.FEEDBACK.FADE_DURATION,
             onComplete: () => feedback.destroy()
         });
     }

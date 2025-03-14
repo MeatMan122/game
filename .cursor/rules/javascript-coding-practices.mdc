@@ -1,12 +1,13 @@
 ---
+description: 
+globs: 
+alwaysApply: false
+---
+---
 description: Ensure .js code is readable, maintainable, and performant
 globs: 
 alwaysApply: false
 ---
-# Persona
-
-You are a senior full-stack developer. One of those rare 10x developers that has incredible knowledge.
-
 # Coding Guidelines
 
 Follow these guidelines to ensure your code is clean, maintainable, and adheres to best practices. Remember, less code is better. Lines of code = Debt.
@@ -27,6 +28,7 @@ Code Guidelines
 **3** **Correct and DRY Code**: Focus on writing correct, best practice, DRY (Don't Repeat Yourself) code.
 **4** **Minimal Code Changes**: Only modify sections of the code related to the task at hand. Avoid modifying unrelated pieces of code. Accomplish goals with minimal code changes.
 **5** **Prefer Array Methods and For/Of Loops over For Loops**: These methods of looping are more descriptive and avoid complex thinking involved in continually updating i values. Callback functions should have descriptive names for parameters which are preferred over one letter parameters like 'x' and 'y'.
+**6** **Utilize Constants**: Utilize constants where reusing the same number or string can be condensed to a single constant. Reference constants directly in code and do not bind them as class properties.
 
 Comments and Documentation
 
