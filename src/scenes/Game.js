@@ -134,14 +134,18 @@ export class Game extends Scene {
       color: UnitConfigs.getColor(unitType),
       name: `${unitType}\n(${UnitConfigs.getCost(unitType)} gold)`,
       onClick: (isSelected) => {
+        console.log('1. Unit Button Clicked:', { unitType, isSelected });
         if (isSelected) {
           if (this.resourceSystem.canAfford(unitType)) {
+            console.log('2. Can afford unit, setting active placement type');
             this.unitSystem.setActivePlacementType(unitType);
           } else {
+            console.log('2. Cannot afford unit');
             button.setSelected(false);
             this.resourceSystem.showInsufficientGoldFeedback();
           }
         } else {
+          console.log('2. Clearing placement selection');
           this.unitSystem.clearPlacementSelection();
         }
       }
@@ -152,6 +156,16 @@ export class Game extends Scene {
   }
 
   setupInputHandlers() {
+    // Create a debounced console log function
+    let lastLog = 0;
+    const debouncedLog = (message, data) => {
+      const now = Date.now();
+      if (now - lastLog > 2000) {
+        console.log(message, data);
+        lastLog = now;
+      }
+    };
+
     // Mouse move handler
     this.input.on('pointermove', (pointer) => {
       const placementType = this.unitSystem.getActivePlacementType();
@@ -159,6 +173,7 @@ export class Game extends Scene {
       
       if ((placementType || selectedGroup) && !this.unitSystem.previewUnits.length) {
         const unitType = placementType || selectedGroup.unitType;
+        debouncedLog('3. Creating preview unit on mouse move:', { unitType });
         this.unitSystem.createPreviewUnit(unitType, 0, 0);
       }
 
@@ -195,13 +210,13 @@ export class Game extends Scene {
           );
         }
         
+        debouncedLog('4. Updating preview position:', { snappedX, snappedY, isValidPosition });
         this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
       }
     });
 
     // Click handler
     this.input.on('pointerdown', (pointer) => {
-      console.log('1. pointerdown:', { pointer });
       if (pointer.y > this.scale.height - this.UI_HEIGHT) return;
 
       const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
@@ -213,6 +228,8 @@ export class Game extends Scene {
       
       if (!placementType && !selectedGroup) return;
 
+      console.log('5. Attempting to place unit:', { placementType, gridX, gridY });
+
       const unitType = placementType || selectedGroup.unitType;
       const unitsPerPlacement = UnitConfigs.getUnitsPerPlacement(unitType);
       const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
@@ -222,6 +239,7 @@ export class Game extends Scene {
       
       // Check territory and available positions
       if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
+        console.log('6. Cannot place: invalid territory');
         canPlace = false;
       } else {
         canPlace = this.gridSystem.arePositionsAvailable(
@@ -230,18 +248,20 @@ export class Game extends Scene {
           unitsPerPlacement, 
           isVertical
         );
+        console.log('6. Position availability check:', { canPlace });
       }
 
       if (canPlace) {
         if (selectedGroup) {
-          // Move existing group
+          console.log('7. Moving existing group');
           this.unitSystem.moveSelectedGroup(snappedX, snappedY);
         } else if (this.resourceSystem.deductCost(placementType)) {
-          // Place new units
+          console.log('7. Placing new unit');
           this.unitSystem.placeUnit(placementType, snappedX, snappedY);
           this.unitSystem.clearPlacementSelection();
         }
       } else {
+        console.log('7. Showing invalid placement feedback');
         this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.previewUnits);
       }
     });

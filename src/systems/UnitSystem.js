@@ -91,6 +91,7 @@ export class UnitSystem {
     }
 
     placeUnit(unitType, x, y) {
+        console.log('8. UnitSystem.placeUnit called:', { unitType, x, y });
         const units = [];
         const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
         const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
@@ -98,9 +99,11 @@ export class UnitSystem {
         
         // Check if positions are available based on rotation
         if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
+            console.log('9. Position not available for placement');
             return null;
         }
 
+        console.log('9. Creating unit instances');
         const positions = [];
         // Create and place units based on rotation
         for (let i = 0; i < unitsPerPlacement; i++) {
@@ -150,9 +153,11 @@ export class UnitSystem {
             });
         }
 
+        console.log('10. Adding units to group');
         // Add the group
         this.addUnitGroup(units, positions);
 
+        console.log('11. Unit placement complete');
         return units;
     }
 
@@ -193,6 +198,7 @@ export class UnitSystem {
     }
 
     setActivePlacementType(unitType) {
+        console.log('2a. Setting active placement type:', { unitType });
         this.activePlacementType = unitType;
         this.clearUnitSelection(); // Clear any selected units on the board
         
