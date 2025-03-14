@@ -3,7 +3,6 @@ import { UnitButton } from "../ui/components/UnitButton";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
-import { BoardSystem } from "../systems/BoardSystem";
 import { UnitConfigs } from "../configs/UnitConfigs";
 
 export class Game extends Scene {
@@ -48,7 +47,6 @@ export class Game extends Scene {
     this.gridSystem = new GridSystem(this);
     this.resourceSystem = new ResourceSystem(this);
     this.unitSystem = new UnitSystem(this);
-    this.boardSystem = new BoardSystem(this);
 
     // Create game world container
     this.gameContainer = this.add.container(0, 0);
@@ -65,8 +63,6 @@ export class Game extends Scene {
 
     // Set up input handlers
     this.setupInputHandlers();
-
-    
   }
 
   setupCameras(worldSize) {
@@ -82,12 +78,12 @@ export class Game extends Scene {
     this.uiCamera.transparent = true;
 
     // Enable WASD controls
-    this.wasd = this.input.keyboard.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.W,
-      down: Phaser.Input.Keyboard.KeyCodes.S,
-      left: Phaser.Input.Keyboard.KeyCodes.A,
-      right: Phaser.Input.Keyboard.KeyCodes.D
-    });
+    this.wasd = {
+      up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+      left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+      right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+    };
   }
 
   createUnitSelectionMenu() {

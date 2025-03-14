@@ -13,6 +13,8 @@ export class UnitSystem {
         this.unitButtons = new Map();
         this.nextUnitId = 1;
         this.unitsById = new Map(); // Track all units by their ID
+        this.nextGroupId = 1;
+        this.unitGroups = new Map(); // Map of groupId to array of unit IDs
     }
 
     registerButton(unitType, button) {
@@ -133,7 +135,7 @@ export class UnitSystem {
                 this.clearUnitSelection();
                 
                 // Get the unit group using unit's groupId
-                const group = this.scene.boardSystem.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
+                const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
                 
                 if (group) {
                     this.selectedUnitGroup = group;
@@ -148,8 +150,8 @@ export class UnitSystem {
             });
         }
 
-        // Add the group to the board system
-        this.scene.boardSystem.addUnitGroup(units, positions);
+        // Add the group
+        this.addUnitGroup(units, positions);
 
         return units;
     }
@@ -166,8 +168,8 @@ export class UnitSystem {
             return;
         }
         
-        // Remove the group from the board state first
-        this.scene.boardSystem.removeUnitGroup(this.selectedUnitGroup);
+        // Remove the group
+        this.removeUnitGroup(this.selectedUnitGroup);
         
         // Then destroy the units and clean up tracking
         this.selectedUnitGroup.units.forEach(unit => {
@@ -237,5 +239,65 @@ export class UnitSystem {
             const { x, y } = firstUnit.sprite;
             this.updatePreviewPosition(x, y, true);
         }
+    }
+
+    // Check if a position is occupied by any unit
+    isPositionOccupied(gridX, gridY) {
+        return Array.from(this.unitsById.values())
+            .some(unit => unit.gridX === gridX && unit.gridY === gridY);
+    }
+
+    getUnitGroup(gridX, gridY) {
+        const unit = Array.from(this.unitsById.values())
+            .find(unit => unit.gridX === gridX && unit.gridY === gridY);
+        
+        if (!unit || unit.groupId === null) return null;
+
+        const groupUnits = Array.from(this.unitsById.values())
+            .filter(u => u.groupId === unit.groupId);
+
+        return {
+            units: groupUnits,
+            unitType: unit.unitType,
+            gridPositions: groupUnits.map(u => ({
+                gridX: u.gridX,
+                gridY: u.gridY
+            })),
+            isVertical: unit.isVertical
+        };
+    }
+
+    // Group management methods
+    addUnitGroup(units, positions) {
+        const groupId = this.nextGroupId++;
+        const unitIds = [];
+
+        for (let i = 0; i < units.length; i++) {
+            const unit = units[i];
+            const pos = positions[i];
+            
+            unit.groupId = groupId;
+            unit.updateGridPosition(pos.gridX, pos.gridY);
+            unitIds.push(unit.id);
+        }
+
+        this.unitGroups.set(groupId, unitIds);
+        return groupId;
+    }
+
+    removeUnitGroup(group) {
+        if (!group || group.units.length === 0) return false;
+        
+        const groupId = group.units[0].groupId;
+        if (groupId === null) return false;
+
+        // Update unit positions
+        group.units.forEach(unit => {
+            unit.updateGridPosition(null, null);
+        });
+
+        // Clear group tracking
+        this.unitGroups.delete(groupId);
+        return true;
     }
 } 

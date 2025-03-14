@@ -58,12 +58,6 @@ export class GridSystem {
                gridY < this.GRID_HEIGHT;
     }
 
-    // Check if a position is occupied by any unit
-    isPositionOccupied(gridX, gridY) {
-        const units = Array.from(this.scene.unitSystem.unitsById.values());
-        return units.some(unit => unit.gridX === gridX && unit.gridY === gridY);
-    }
-
     // Check if a range of grid positions is available
     arePositionsAvailable(gridX, gridY, length, isVertical = false) {
         for (let i = 0; i < length; i++) {
@@ -71,7 +65,7 @@ export class GridSystem {
             const currentY = gridY + (isVertical ? i : 0);
             
             if (!this.isValidGridPosition(currentX, currentY) || 
-                this.isPositionOccupied(currentX, currentY)) {
+                this.scene.unitSystem.isPositionOccupied(currentX, currentY)) {
                 return false;
             }
         }
