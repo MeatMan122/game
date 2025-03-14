@@ -27,13 +27,21 @@ export class UnitSystem {
     createUnitInstance(unitType, x, y) {
         switch(unitType) {
             case 'warrior':
-                return new Warrior(this, x, y);
+                return new Warrior(this.scene, x, y);
             case 'archer':
-                return new Archer(this, x, y);
+                return new Archer(this.scene, x, y);
             default:
                 console.error('Unknown unit type:', unitType);
                 return null;
         }
+    }
+
+    // Helper to assign an ID to a unit
+    assignUnitId(unit) {
+        const id = this.nextUnitId++;
+        unit.id = id;
+        this.unitsById.set(id, unit);
+        return id;
     }
 
     // Helper to get a unit by ID
@@ -87,7 +95,7 @@ export class UnitSystem {
         const isVertical = this.previewUnits[0]?.isVertical || false;
         
         // Check if positions are available based on rotation
-        if (!this.scene.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
+        if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
             return null;
         }
 
@@ -105,7 +113,7 @@ export class UnitSystem {
             unit.isVertical = isVertical;
             
             // Assign ID and track the unit
-            this.unitsById.set(unit.id, unit);
+            this.assignUnitId(unit);
             units.push(unit);
 
             // Store position for group placement
@@ -154,7 +162,7 @@ export class UnitSystem {
         const isVertical = this.selectedUnitGroup.isVertical;
 
         // Check if new positions are available
-        if (!this.scene.boardSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
+        if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
             return;
         }
         
@@ -229,9 +237,5 @@ export class UnitSystem {
             const { x, y } = firstUnit.sprite;
             this.updatePreviewPosition(x, y, true);
         }
-    }
-
-    getNextUnitId() {
-        return String(this.nextUnitId++);
     }
 } 

@@ -1,7 +1,7 @@
 import { Unit } from './Unit';
 
 export class Warrior extends Unit {
-    constructor(unitSystem, x, y) {
-        super(unitSystem, x, y, 'warrior');
+    constructor(scene, x, y) {
+        super(scene, x, y, 'warrior');
     }
 } 

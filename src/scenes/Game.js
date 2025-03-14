@@ -191,7 +191,7 @@ export class Game extends Scene {
 
         // Check if positions are available
         if (isValidPosition) {
-          isValidPosition = this.boardSystem.arePositionsAvailable(
+          isValidPosition = this.gridSystem.arePositionsAvailable(
             gridX, 
             gridY, 
             unitsPerPlacement, 
@@ -228,7 +228,7 @@ export class Game extends Scene {
       if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
         canPlace = false;
       } else {
-        canPlace = this.boardSystem.arePositionsAvailable(
+        canPlace = this.gridSystem.arePositionsAvailable(
           gridX, 
           gridY, 
           unitsPerPlacement, 
