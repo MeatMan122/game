@@ -1,13 +1,16 @@
 export class Unit {
-    constructor(scene, x, y, unitType) {
-        this.scene = scene;
+    constructor(unitSystem, x, y, unitType) {
+        this.unitSystem = unitSystem;
+        this.scene = unitSystem.scene;
         this.unitType = unitType;
-        this.id = null; // Will be set by UnitSystem
-        this.groupId = null; // Group identifier for units placed together
-        this.sprite = null; // Will be set by createSprite
+        this.id = this.unitSystem.getNextUnitId();
+        this.sprite = null;
         this.isVertical = false;
-        this.gridX = null; // Current grid position X
-        this.gridY = null; // Current grid position Y
+        this.gridX = null;
+        this.gridY = null;
+        
+        // Register the unit with the system
+        this.unitSystem.unitsById.set(this.id, this);
         
         // Create the sprite
         this.createSprite(x, y);

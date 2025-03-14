@@ -27,21 +27,13 @@ export class UnitSystem {
     createUnitInstance(unitType, x, y) {
         switch(unitType) {
             case 'warrior':
-                return new Warrior(this.scene, x, y);
+                return new Warrior(this, x, y);
             case 'archer':
-                return new Archer(this.scene, x, y);
+                return new Archer(this, x, y);
             default:
                 console.error('Unknown unit type:', unitType);
                 return null;
         }
-    }
-
-    // Helper to assign an ID to a unit
-    assignUnitId(unit) {
-        const id = this.nextUnitId++;
-        unit.id = id;
-        this.unitsById.set(id, unit);
-        return id;
     }
 
     // Helper to get a unit by ID
@@ -113,7 +105,7 @@ export class UnitSystem {
             unit.isVertical = isVertical;
             
             // Assign ID and track the unit
-            this.assignUnitId(unit);
+            this.unitsById.set(unit.id, unit);
             units.push(unit);
 
             // Store position for group placement
@@ -237,5 +229,9 @@ export class UnitSystem {
             const { x, y } = firstUnit.sprite;
             this.updatePreviewPosition(x, y, true);
         }
+    }
+
+    getNextUnitId() {
+        return String(this.nextUnitId++);
     }
 } 
