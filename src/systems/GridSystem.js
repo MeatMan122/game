@@ -4,6 +4,8 @@ export class GridSystem {
     constructor(scene) {
         this.scene = scene;
         this.gridGraphics = null;
+        this.deploymentZoneCenterX = null;
+        this.deploymentZoneCenterY = null;
     }
 
     create(gameContainer) {
@@ -136,6 +138,11 @@ export class GridSystem {
         graphics.moveTo(GRID.PADDING.LEFT, playerTerritoryY);
         graphics.lineTo(GRID.PADDING.LEFT + GRID.WIDTH * GRID.CELL_SIZE, playerTerritoryY);
         graphics.strokePath();
+
+    
+    // Calculate center of player deployment zone
+    this.deploymentZoneCenterX = deploymentZoneX + (deploymentZoneWidth / 2);
+    this.deploymentZoneCenterY = playerDeploymentY + (deploymentZoneWidth / 2);
     }
 
     drawGridLines() {
