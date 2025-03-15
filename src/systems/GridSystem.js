@@ -143,6 +143,8 @@ export class GridSystem {
     // Calculate center of player deployment zone
     this.deploymentZoneCenterX = deploymentZoneX + (deploymentZoneWidth / 2);
     this.deploymentZoneCenterY = playerDeploymentY + (deploymentZoneWidth / 2);
+    console.log('deploymentZoneCenterX', this.deploymentZoneCenterX);
+    console.log('deploymentZoneCenterY', this.deploymentZoneCenterY);
     }
 
     drawGridLines() {

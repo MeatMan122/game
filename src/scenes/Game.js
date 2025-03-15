@@ -125,6 +125,9 @@ export class Game extends Scene {
           if (this.resourceSystem.canAfford(unitType)) {
             console.log('2. Can afford unit, setting active placement type');
             this.unitSystem.setActivePlacementType(unitType);
+            // creat new instance of unit, not a preview unit.
+            // get center of deployment zone
+            // place unit at center of deployment zone
           } else {
             console.log('2. Cannot afford unit');
             button.setSelected(false);
@@ -157,48 +160,48 @@ export class Game extends Scene {
       const placementType = this.unitSystem.getActivePlacementType();
       const selectedGroup = this.unitSystem.selectedUnitGroup;
       
-      if ((placementType || selectedGroup) && !this.unitSystem.previewUnits.length) {
-        const unitType = placementType || selectedGroup.unitType;
-        debouncedLog('3. Creating preview unit on mouse move:', { unitType });
-        this.unitSystem.createPreviewUnit(unitType, 0, 0);
-      }
+      // if ((placementType || selectedGroup) && !this.unitSystem.previewUnits.length) {
+      //   const unitType = placementType || selectedGroup.unitType;
+      //   debouncedLog('3. Creating preview unit on mouse move:', { unitType });
+      //   this.unitSystem.createPreviewUnit(unitType, 0, 0);
+      // }
 
-      if (this.unitSystem.previewUnits.length > 0) {
-        const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
-        const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
+      // if (this.unitSystem.previewUnits.length > 0) {
+      //   const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      //   const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
+      //   const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
         
-        const unitType = placementType || selectedGroup?.unitType;
-        const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
-        const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
+      //   const unitType = placementType || selectedGroup?.unitType;
+      //   const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
+      //   const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
         
-        // Check if all units in the line can be placed
-        let isValidPosition = true;
+      //   // Check if all units in the line can be placed
+      //   let isValidPosition = true;
         
-        // Check grid boundaries and territory
-        for (let i = 0; i < unitsPerPlacement; i++) {
-          const currentGridX = gridX + (isVertical ? 0 : i);
-          const currentGridY = gridY + (isVertical ? i : 0);
-          if (!this.gridSystem.isValidGridPosition(currentGridX, currentGridY) || 
-              this.gridSystem.getTerritoryAt(currentGridY) !== 'player') {
-            isValidPosition = false;
-            break;
-          }
-        }
+      //   // Check grid boundaries and territory
+      //   for (let i = 0; i < unitsPerPlacement; i++) {
+      //     const currentGridX = gridX + (isVertical ? 0 : i);
+      //     const currentGridY = gridY + (isVertical ? i : 0);
+      //     if (!this.gridSystem.isValidGridPosition(currentGridX, currentGridY) || 
+      //         this.gridSystem.getTerritoryAt(currentGridY) !== 'player') {
+      //       isValidPosition = false;
+      //       break;
+      //     }
+      //   }
 
-        // Check if positions are available
-        if (isValidPosition) {
-          isValidPosition = this.gridSystem.arePositionsAvailable(
-            gridX, 
-            gridY, 
-            unitsPerPlacement, 
-            isVertical
-          );
-        }
+      //   // Check if positions are available
+      //   if (isValidPosition) {
+      //     isValidPosition = this.gridSystem.arePositionsAvailable(
+      //       gridX, 
+      //       gridY, 
+      //       unitsPerPlacement, 
+      //       isVertical
+      //     );
+      //   }
         
-        debouncedLog('4. Updating preview position:', { snappedX, snappedY, isValidPosition });
-        this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
-      }
+      //   debouncedLog('4. Updating preview position:', { snappedX, snappedY, isValidPosition });
+      //   this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
+      // }
     });
 
     // Click handler
