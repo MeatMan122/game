@@ -153,10 +153,13 @@ export class Game extends Scene {
     };
 
     // Mouse move handler
+    // This handler has way too many responsibilities. It should handle movement updates, not unit creation.
     this.input.on('pointermove', (pointer) => {
       const placementType = this.unitSystem.getActivePlacementType();
       const selectedGroup = this.unitSystem.selectedUnitGroup;
       
+      // Creates a preview unit if there is no other preview unit
+      // This would be better if it simply determined which unit to move. So, some kind of active selcted unit/group
       if ((placementType || selectedGroup) && !this.unitSystem.previewUnits.length) {
         const unitType = placementType || selectedGroup.unitType;
         debouncedLog('3. Creating preview unit on mouse move:', { unitType });
