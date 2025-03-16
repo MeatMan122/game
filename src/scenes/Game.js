@@ -12,6 +12,7 @@ export class Game extends Scene {
     this.previewUnit = null;
     this.gridGraphics = null;
     this.unitButtons = new Map();
+    this.currentRound = 1;
   }
 
   create() {

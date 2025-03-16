@@ -8,7 +8,7 @@ export class Unit {
         this.isVertical = false;
         this.gridX = null; // Current grid position X
         this.gridY = null; // Current grid position Y
-        
+        this.roundCreated = null;
         // Create the sprite
         this.createSprite(x, y);
     }

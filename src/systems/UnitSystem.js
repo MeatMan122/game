@@ -82,6 +82,7 @@ export class UnitSystem {
             
             // Assign ID and track the unit
             this.assignUnitId(unit);
+            unit.roundCreated = this.scene.currentRound;
             units.push(unit);
 
             // Store position for group placement
@@ -103,8 +104,20 @@ export class UnitSystem {
                 const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
                 
                 if (group) {
-                    this.selectedUnitGroup = group;
-                    
+                    if (group.canReposition) {
+                        this.selectedUnitGroup = group;
+                        // reset x/y coordinates that translate to grid positions to null so that we don't get invalid placement feedback
+                        // this.selectedUnitGroup.units.forEach(unit => {
+                        //     unit.gridX = null;
+                        //     unit.gridY = null;
+                        // });
+                        this.selectedUnitGroup.units.forEach(unit => {
+                            unit.setAlpha(0.5);
+                        });
+                    }
+                    else {
+                        this.scene.gridSystem.showInvalidPlacementFeedback(group.units);    
+                    }
                 }
             });
         }
@@ -191,6 +204,7 @@ export class UnitSystem {
         return {
             units: groupUnits,
             unitType: unit.unitType,
+            canReposition: groupUnits.every(u => u.roundCreated === this.scene.currentRound),
             gridPositions: groupUnits.map(u => ({
                 gridX: u.gridX,
                 gridY: u.gridY
