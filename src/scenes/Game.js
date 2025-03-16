@@ -121,7 +121,6 @@ export class Game extends Scene {
       name: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
       onClick: (isSelected) => {
         console.log('1. Unit Button Clicked:', { unitType, isSelected });
-        if (isSelected) {
           if (this.resourceSystem.canAfford(unitType)) {
             console.log('2. Can afford unit, setting active placement type');
             this.unitSystem.setActivePlacementType(unitType);
@@ -140,13 +139,9 @@ export class Game extends Scene {
           }
         else {
           console.log('2. Cannot afford unit');
-          button.setSelected(false);
           this.resourceSystem.showInsufficientGoldFeedback();
         }
-      } else {
-        console.log('2. Clearing placement selection');
-        this.unitSystem.clearPlacementSelection();
-      }
+      
     }
     });
     button.setDepth(GAME.UI.BUTTON.DEPTH);
@@ -176,9 +171,7 @@ setupInputHandlers() {
   this.input.on('pointerdown', (pointer) => {
     if (pointer.y > this.scale.height - UI.PANEL_HEIGHT) return;
 
-    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
-    const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
+    const { snappedX, snappedY, gridX, gridY } = this.gridSystem.getGridPositionFromPointer(pointer, this.cameras.main);
 
     const placementType = this.unitSystem.getActivePlacementType();
     const selectedGroup = this.unitSystem.selectedUnitGroup;

@@ -40,6 +40,14 @@ export class GridSystem {
         return { gridX, gridY };
     }
 
+    getGridPositionFromPointer(pointer, camera) {
+        const worldPoint = camera.getWorldPoint(pointer.x, pointer.y);
+        const { snappedX, snappedY } = this.snapToGrid(worldPoint.x, worldPoint.y);
+        const { gridX, gridY } = this.worldToGrid(snappedX, snappedY);
+        
+        return { worldPoint, snappedX, snappedY, gridX, gridY };
+    }
+
     isValidGridPosition(gridX, gridY) {
         return gridX >= 0 && 
                gridX < GRID.WIDTH &&

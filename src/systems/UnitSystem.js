@@ -94,8 +94,7 @@ export class UnitSystem {
             unit.sprite.on('pointerdown', (pointer) => {
                 if (pointer.rightButtonDown()) return;
                 
-                const worldPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-                const { snappedX, snappedY } = this.scene.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
+                const { snappedX, snappedY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
                 
                 // Clear unit selection but keep placement selection
                 this.clearUnitSelection();
@@ -150,11 +149,6 @@ export class UnitSystem {
         console.log('2a. Setting active placement type:', { unitType });
         this.activePlacementType = unitType;
         this.clearUnitSelection(); // Clear any selected units on the board
-        
-        // Update UI buttons
-        this.unitButtons.forEach((button, type) => {
-            button.setSelected(type === unitType);
-        });
     }
 
     getActivePlacementType() {
@@ -163,11 +157,6 @@ export class UnitSystem {
 
     clearPlacementSelection() {
         this.activePlacementType = null;
-        
-        // Update UI buttons
-        this.unitButtons.forEach(button => {
-            button.setSelected(false);
-        });
     }
 
     clearUnitSelection() {

@@ -1,5 +1,6 @@
 export class UnitButton {
     constructor(scene, config) {
+        this.button = null;
         this.scene = scene;
         this.x = config.x;
         this.y = config.y;
@@ -7,8 +8,6 @@ export class UnitButton {
         this.color = config.color;
         this.name = config.name.charAt(0).toUpperCase() + config.name.slice(1);
         this.onClick = config.onClick;
-        this.isSelected = false;
-        
         this.container = this.scene.add.container(0, 0);
         this.createButton();
     }
@@ -30,32 +29,22 @@ export class UnitButton {
         // Add event listeners
         this.button.on('pointerover', () => {
             this.text.setAlpha(1);
-            if (!this.isSelected) {
                 this.button.setStrokeStyle(2, 0xffffff);
-            }
         });
 
         this.button.on('pointerout', () => {
             this.text.setAlpha(0);
-            if (!this.isSelected) {
                 this.button.setStrokeStyle(0);
-            }
         });
 
         this.button.on('pointerdown', () => {
-            this.setSelected(!this.isSelected);
             if (this.onClick) {
-                this.onClick(this.isSelected);
+                this.onClick();
             }
         });
 
         // Add elements to container
         this.container.add([this.button, this.text]);
-    }
-
-    setSelected(selected) {
-        this.isSelected = selected;
-        this.button.setStrokeStyle(selected ? 2 : 0, 0xffffff);
     }
 
     setDepth(depth) {
