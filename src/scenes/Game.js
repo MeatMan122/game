@@ -41,7 +41,7 @@ export class Game extends Scene {
     // Set up the main camera
     this.cameras.main.setBackgroundColor(GAME.BACKGROUND_COLOR);
     this.cameras.main.setBounds(0, 0, worldSize.width, worldSize.height);
-    
+
     // Set initial zoom to 0.75 (25% zoomed out from default)
     this.cameras.main.setZoom(0.75);
 
@@ -49,12 +49,12 @@ export class Game extends Scene {
     const deploymentZoneX = GRID.PADDING.LEFT + (TERRITORY.DEPLOYMENT_ZONE.PADDING + TERRITORY.DEPLOYMENT_ZONE.SIZE / 2) * GRID.CELL_SIZE;
     const playerTerritoryY = GRID.PADDING.TOP + (TERRITORY.TERRITORY_HEIGHT * 2 + TERRITORY.NO_MANS_LAND_HEIGHT) * GRID.CELL_SIZE;
     const deploymentZoneY = playerTerritoryY + (TERRITORY.TERRITORY_HEIGHT - TERRITORY.DEPLOYMENT_ZONE.SIZE) / 2 * GRID.CELL_SIZE;
-    
+
     // Adjust Y position to account for the camera height at current zoom and UI space
     const cameraHeight = this.scale.height / 0.75; // height in world pixels at current zoom
     const yOffset = cameraHeight * 0.8; // move camera up by 80% of its height
     const uiOffset = UI.PANEL_HEIGHT * 1.65; // offset to account for UI space
-    
+
     // Center camera on player's deployment zone with offset
     this.cameras.main.centerOn(deploymentZoneX, deploymentZoneY - yOffset + uiOffset);
 
@@ -76,18 +76,18 @@ export class Game extends Scene {
     // Create a container for UI elements
     const uiContainer = this.add.container(0, 0);
     uiContainer.setDepth(GAME.UI.MENU.DEPTH);
-    
+
     // Add background panel
     const menuBg = this.add.rectangle(
-      0, 
-      this.scale.height - UI.PANEL_HEIGHT, 
-      this.scale.width, 
-      UI.PANEL_HEIGHT, 
-      GAME.UI.MENU.BACKGROUND.COLOR, 
+      0,
+      this.scale.height - UI.PANEL_HEIGHT,
+      this.scale.width,
+      UI.PANEL_HEIGHT,
+      GAME.UI.MENU.BACKGROUND.COLOR,
       GAME.UI.MENU.BACKGROUND.ALPHA
     );
     menuBg.setOrigin(0, 0);
-    
+
     // Create gold counter
     const goldText = this.resourceSystem.createGoldCounter(
       this.scale.width - UI.BUTTON.PADDING,
@@ -96,10 +96,10 @@ export class Game extends Scene {
 
     // Add base UI elements
     uiContainer.add([menuBg, goldText]);
-    
+
     // Create buttons and add to UI container
     this.createButtons(uiContainer);
-    
+
     // Set up UI camera to only show UI elements
     this.uiCamera.ignore(this.gameContainer);
     this.cameras.main.ignore(uiContainer);
@@ -108,7 +108,7 @@ export class Game extends Scene {
   createButtons(uiContainer) {
     this.ArcherButton = this.createUnitButton(UNIT_TYPES.ARCHER, UI.BUTTON.PADDING, UI.BUTTON.SPACING, UI.BUTTON.SIZE);
     this.warriorButton = this.createUnitButton(UNIT_TYPES.WARRIOR, UI.BUTTON.PADDING + UI.BUTTON.SPACING, UI.BUTTON.SPACING, UI.BUTTON.SIZE);
-    
+
     uiContainer.add([this.ArcherButton.container, this.warriorButton.container]);
   }
 
@@ -125,174 +125,138 @@ export class Game extends Scene {
           if (this.resourceSystem.canAfford(unitType)) {
             console.log('2. Can afford unit, setting active placement type');
             this.unitSystem.setActivePlacementType(unitType);
-          } else {
-            console.log('2. Cannot afford unit');
-            button.setSelected(false);
-            this.resourceSystem.showInsufficientGoldFeedback();
+
+            const { snappedX, snappedY } = this.gridSystem.getCoordinatesForUnitDeployment(unitType);
+
+            // Deduct cost and place unit
+            this.resourceSystem.deductCost(unitType)
+            const placedUnits = this.unitSystem.placeUnit(unitType, snappedX, snappedY);
+            if (!placedUnits) {
+              // Refund if placement failed
+              this.resourceSystem.gold += UNIT_CONFIGS[unitType].cost;
+              this.resourceSystem.updateGoldDisplay();
+            }
+
           }
-        } else {
-          console.log('2. Clearing placement selection');
-          this.unitSystem.clearPlacementSelection();
+        else {
+          console.log('2. Cannot afford unit');
+          button.setSelected(false);
+          this.resourceSystem.showInsufficientGoldFeedback();
         }
+      } else {
+        console.log('2. Clearing placement selection');
+        this.unitSystem.clearPlacementSelection();
       }
+    }
     });
     button.setDepth(GAME.UI.BUTTON.DEPTH);
     this.unitSystem.registerButton(unitType, button);
-    return button;
+return button;
   }
 
-  setupInputHandlers() {
-    // Create a debounced console log function
-    let lastLog = 0;
-    const debouncedLog = (message, data) => {
-      const now = Date.now();
-      if (now - lastLog > GAME.DEBUG.LOG_DEBOUNCE) {
-        console.log(message, data);
-        lastLog = now;
+setupInputHandlers() {
+  // Create a debounced console log function
+  let lastLog = 0;
+  const debouncedLog = (message, data) => {
+    const now = Date.now();
+    if (now - lastLog > GAME.DEBUG.LOG_DEBOUNCE) {
+      console.log(message, data);
+      lastLog = now;
+    }
+  };
+
+  // Mouse move handler
+  this.input.on('pointermove', (pointer) => {
+    const placementType = this.unitSystem.getActivePlacementType();
+    const selectedGroup = this.unitSystem.selectedUnitGroup;
+
+  });
+
+  // Click handler
+  this.input.on('pointerdown', (pointer) => {
+    if (pointer.y > this.scale.height - UI.PANEL_HEIGHT) return;
+
+    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
+    const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
+
+    const placementType = this.unitSystem.getActivePlacementType();
+    const selectedGroup = this.unitSystem.selectedUnitGroup;
+
+    if (!placementType && !selectedGroup) return;
+
+    console.log('5. Attempting to place unit:', { placementType, gridX, gridY });
+
+    const unitType = placementType || selectedGroup.unitType;
+    const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
+    const isVertical = false;
+
+    // Check if all units in the line can be placed
+    let canPlace = true;
+
+    // Check territory and available positions
+    if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
+      console.log('6. Cannot place: invalid territory');
+      canPlace = false;
+    } else {
+      canPlace = this.gridSystem.arePositionsAvailable(
+        gridX,
+        gridY,
+        unitsPerPlacement,
+        isVertical
+      );
+      console.log('6. Position availability check:', { canPlace });
+    }
+
+    if (canPlace) {
+      if (selectedGroup) {
+        console.log('7. Moving existing group');
+        this.unitSystem.moveSelectedGroup(snappedX, snappedY);
       }
-    };
+    } else {
+      console.log('7. Showing invalid placement feedback');
+      this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.selectedUnitGroup.units);
+    }
+  });
 
-    // Mouse move handler
-    // This handler has way too many responsibilities. It should handle movement updates, not unit creation.
-    this.input.on('pointermove', (pointer) => {
-      const placementType = this.unitSystem.getActivePlacementType();
-      const selectedGroup = this.unitSystem.selectedUnitGroup;
-      
-      // Creates a preview unit if there is no other preview unit
-      // This would be better if it simply determined which unit to move. So, some kind of active selcted unit/group
-      if ((placementType || selectedGroup) && !this.unitSystem.previewUnits.length) {
-        const unitType = placementType || selectedGroup.unitType;
-        debouncedLog('3. Creating preview unit on mouse move:', { unitType });
-        this.unitSystem.createPreviewUnit(unitType, 0, 0);
-      }
+  // Right-click handler
+  this.input.on('pointerdown', (pointer) => {
+    if (pointer.rightButtonDown()) {
+      this.unitSystem.clearAllSelections();
+    }
+  });
 
-      if (this.unitSystem.previewUnits.length > 0) {
-        const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
-        const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
-        
-        const unitType = placementType || selectedGroup?.unitType;
-        const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
-        const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
-        
-        // Check if all units in the line can be placed
-        let isValidPosition = true;
-        
-        // Check grid boundaries and territory
-        for (let i = 0; i < unitsPerPlacement; i++) {
-          const currentGridX = gridX + (isVertical ? 0 : i);
-          const currentGridY = gridY + (isVertical ? i : 0);
-          if (!this.gridSystem.isValidGridPosition(currentGridX, currentGridY) || 
-              this.gridSystem.getTerritoryAt(currentGridY) !== 'player') {
-            isValidPosition = false;
-            break;
-          }
-        }
+  // Zoom handler
+  this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+    const zoom = this.cameras.main.zoom;
+    if (deltaY > 0) {
+      this.cameras.main.setZoom(Math.max(CAMERA.MIN_ZOOM, zoom - CAMERA.ZOOM_STEP));
+    } else {
+      this.cameras.main.setZoom(Math.min(CAMERA.MAX_ZOOM, zoom + CAMERA.ZOOM_STEP));
+    }
+  });
 
-        // Check if positions are available
-        if (isValidPosition) {
-          isValidPosition = this.gridSystem.arePositionsAvailable(
-            gridX, 
-            gridY, 
-            unitsPerPlacement, 
-            isVertical
-          );
-        }
-        
-        debouncedLog('4. Updating preview position:', { snappedX, snappedY, isValidPosition });
-        this.unitSystem.updatePreviewPosition(snappedX, snappedY, isValidPosition);
-      }
-    });
+  // Add T key handler for unit rotation
+  this.input.keyboard.on('keydown-T', () => {
+    // this.unitSystem.toggleRotation();
+  });
+}
 
-    // Click handler
-    this.input.on('pointerdown', (pointer) => {
-      if (pointer.y > this.scale.height - UI.PANEL_HEIGHT) return;
+update() {
+  // Camera movement with WASD keys
+  const camera = this.cameras.main;
 
-      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      const { snappedX, snappedY } = this.gridSystem.snapToGrid(worldPoint.x, worldPoint.y);
-      const { gridX, gridY } = this.gridSystem.worldToGrid(snappedX, snappedY);
-
-      const placementType = this.unitSystem.getActivePlacementType();
-      const selectedGroup = this.unitSystem.selectedUnitGroup;
-      
-      if (!placementType && !selectedGroup) return;
-
-      console.log('5. Attempting to place unit:', { placementType, gridX, gridY });
-
-      const unitType = placementType || selectedGroup.unitType;
-      const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
-      const isVertical = this.unitSystem.previewUnits[0]?.isVertical || false;
-      
-      // Check if all units in the line can be placed
-      let canPlace = true;
-      
-      // Check territory and available positions
-      if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
-        console.log('6. Cannot place: invalid territory');
-        canPlace = false;
-      } else {
-        canPlace = this.gridSystem.arePositionsAvailable(
-          gridX, 
-          gridY, 
-          unitsPerPlacement, 
-          isVertical
-        );
-        console.log('6. Position availability check:', { canPlace });
-      }
-
-      if (canPlace) {
-        if (selectedGroup) {
-          console.log('7. Moving existing group');
-          this.unitSystem.moveSelectedGroup(snappedX, snappedY);
-        } else if (this.resourceSystem.deductCost(placementType)) {
-          console.log('7. Placing new unit');
-          this.unitSystem.placeUnit(placementType, snappedX, snappedY);
-          this.unitSystem.clearPlacementSelection();
-        }
-      } else {
-        console.log('7. Showing invalid placement feedback');
-        this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.previewUnits);
-      }
-    });
-
-    // Right-click handler
-    this.input.on('pointerdown', (pointer) => {
-      if (pointer.rightButtonDown()) {
-        this.unitSystem.clearAllSelections();
-      }
-    });
-
-    // Zoom handler
-    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-      const zoom = this.cameras.main.zoom;
-      if (deltaY > 0) {
-        this.cameras.main.setZoom(Math.max(CAMERA.MIN_ZOOM, zoom - CAMERA.ZOOM_STEP));
-      } else {
-        this.cameras.main.setZoom(Math.min(CAMERA.MAX_ZOOM, zoom + CAMERA.ZOOM_STEP));
-      }
-    });
-
-    // Add T key handler for unit rotation
-    this.input.keyboard.on('keydown-T', () => {
-      this.unitSystem.toggleRotation();
-    });
+  if (this.wasd.left.isDown) {
+    camera.scrollX -= CAMERA.MOVE_SPEED;
   }
-
-  update() {
-    // Camera movement with WASD keys
-    const camera = this.cameras.main;
-
-    if (this.wasd.left.isDown) {
-      camera.scrollX -= CAMERA.MOVE_SPEED;
-    }
-    if (this.wasd.right.isDown) {
-      camera.scrollX += CAMERA.MOVE_SPEED;
-    }
-    if (this.wasd.up.isDown) {
-      camera.scrollY -= CAMERA.MOVE_SPEED;
-    }
-    if (this.wasd.down.isDown) {
-      camera.scrollY += CAMERA.MOVE_SPEED;
-    }
+  if (this.wasd.right.isDown) {
+    camera.scrollX += CAMERA.MOVE_SPEED;
   }
+  if (this.wasd.up.isDown) {
+    camera.scrollY -= CAMERA.MOVE_SPEED;
+  }
+  if (this.wasd.down.isDown) {
+    camera.scrollY += CAMERA.MOVE_SPEED;
+  }
+}
 }

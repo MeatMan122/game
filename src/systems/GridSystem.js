@@ -1,9 +1,12 @@
+import { UNIT_CONFIGS } from '../configs/UnitConfigs';
 import { GRID, TERRITORY, TERRITORY_COLORS, GRID_STYLE, ANIMATION } from '../configs/Constants';
 
 export class GridSystem {
     constructor(scene) {
         this.scene = scene;
         this.gridGraphics = null;
+        this.deploymentZoneCenterX = null;
+        this.deploymentZoneCenterY = null;
     }
 
     create(gameContainer) {
@@ -136,6 +139,10 @@ export class GridSystem {
         graphics.moveTo(GRID.PADDING.LEFT, playerTerritoryY);
         graphics.lineTo(GRID.PADDING.LEFT + GRID.WIDTH * GRID.CELL_SIZE, playerTerritoryY);
         graphics.strokePath();
+
+        // Calculate center of player deployment zone
+        this.deploymentZoneCenterX = deploymentZoneX + (deploymentZoneWidth / 2);
+        this.deploymentZoneCenterY = playerDeploymentY + (deploymentZoneWidth / 2);
     }
 
     drawGridLines() {
@@ -174,5 +181,63 @@ export class GridSystem {
                 onComplete: () => feedback.destroy()
             });
         });
+    }
+
+    getCoordinatesForUnitDeployment(unitType) {
+        if (this.deploymentZoneCenterX === null || this.deploymentZoneCenterY === null) {
+            return null;
+        }
+    
+        const unitSize = UNIT_CONFIGS[unitType].unitsPerPlacement || 1; // Default to 1 if size not specified
+        const deploymentZoneWidth = TERRITORY.DEPLOYMENT_ZONE.SIZE * GRID.CELL_SIZE;
+        const deploymentZoneX = GRID.PADDING.LEFT + (TERRITORY.DEPLOYMENT_ZONE.PADDING * GRID.CELL_SIZE);
+        const playerDeploymentY = GRID.PADDING.TOP + 
+                                (TERRITORY.TERRITORY_HEIGHT + TERRITORY.NO_MANS_LAND_HEIGHT) * GRID.CELL_SIZE +
+                                ((TERRITORY.TERRITORY_HEIGHT - TERRITORY.DEPLOYMENT_ZONE.SIZE) / 2) * GRID.CELL_SIZE;
+    
+        // Convert center to grid coordinates
+        const centerGrid = this.worldToGrid(this.deploymentZoneCenterX, this.deploymentZoneCenterY);
+        
+        // Define deployment zone boundaries in grid coordinates
+        const minGridX = this.worldToGrid(deploymentZoneX, 0).gridX;
+        const maxGridX = this.worldToGrid(deploymentZoneX + deploymentZoneWidth, 0).gridX - (unitSize - 1);
+        const minGridY = this.worldToGrid(0, playerDeploymentY).gridY;
+        const maxGridY = this.worldToGrid(0, playerDeploymentY + deploymentZoneWidth).gridY - (unitSize - 1);
+    
+        // Check center first
+        if (this.arePositionsAvailable(centerGrid.gridX, centerGrid.gridY, unitSize)) {
+            return this.snapToGrid(this.deploymentZoneCenterX, this.deploymentZoneCenterY);
+        }
+    
+        // Search pattern: spiral outward from center
+        const directions = [
+            { dx: 0, dy: -1 },  // up
+            { dx: 0, dy: 1 },   // down
+            { dx: -1, dy: 0 },  // left
+            { dx: 1, dy: 0 }    // right
+        ];
+    
+        for (let distance = 1; distance <= Math.max(TERRITORY.DEPLOYMENT_ZONE.SIZE / 2, unitSize); distance++) {
+            for (const dir of directions) {
+                const testGridX = centerGrid.gridX + (dir.dx * distance);
+                const testGridY = centerGrid.gridY + (dir.dy * distance);
+    
+                // Check if position is within deployment zone bounds
+                if (testGridX >= minGridX && testGridX <= maxGridX &&
+                    testGridY >= minGridY && testGridY <= maxGridY) {
+                    
+                    if (this.arePositionsAvailable(testGridX, testGridY, unitSize)) {
+                        const worldPos = this.snapToGrid(
+                            GRID.PADDING.LEFT + (testGridX * GRID.CELL_SIZE) + (GRID.CELL_SIZE / 2),
+                            GRID.PADDING.TOP + (testGridY * GRID.CELL_SIZE) + (GRID.CELL_SIZE / 2)
+                        );
+                        return worldPos;
+                    }
+                }
+            }
+        }
+    
+        // Return null if no valid position found
+        return null;
     }
 } 

@@ -10,7 +10,6 @@ export class UnitSystem {
         this.activePlacementType = null;
         // For tracking existing units/groups selected on the board
         this.selectedUnitGroup = null;
-        this.previewUnits = []; // Array to hold preview units
         this.unitButtons = new Map();
         this.nextUnitId = 1;
         this.unitsById = new Map(); // Track all units by their ID
@@ -52,51 +51,14 @@ export class UnitSystem {
         return this.unitsById.get(id);
     }
 
-    createPreviewUnit(unitType, x, y) {
-        this.clearPreview();
-        
-        // If we have a selected group, destroy its units
-        if (this.selectedUnitGroup) {
-            this.selectedUnitGroup.units.forEach(unit => {
-                unit.destroy();
-            });
-        }
-        
-        const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
-        
-        // Create preview units
-        for (let i = 0; i < unitsPerPlacement; i++) {
-            const previewUnit = this.createUnitInstance(
-                unitType,
-                x + (i * GRID.CELL_SIZE), // Start horizontal by default
-                y
-            );
-            
-            if (previewUnit) {
-                previewUnit.setAlpha(0.6);
-                this.previewUnits.push(previewUnit);
-            }
-        }
-    }
-
-    updatePreviewPosition(x, y, isValidPosition) {
-        this.previewUnits.forEach((unit, index) => {
-            if (unit) {
-                unit.setPosition(
-                    x + (unit.isVertical ? 0 : index * GRID.CELL_SIZE),
-                    y + (unit.isVertical ? index * GRID.CELL_SIZE : 0)
-                );
-                unit.setAlpha(isValidPosition ? UNIT.PREVIEW.VALID_ALPHA : UNIT.PREVIEW.INVALID_ALPHA);
-            }
-        });
-    }
+    
 
     placeUnit(unitType, x, y) {
         console.log('8. UnitSystem.placeUnit called:', { unitType, x, y });
         const units = [];
         const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
         const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
-        const isVertical = this.previewUnits[0]?.isVertical || false;
+        const isVertical =  false;
         
         // Check if positions are available based on rotation
         if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
@@ -143,13 +105,7 @@ export class UnitSystem {
                 
                 if (group) {
                     this.selectedUnitGroup = group;
-                    // Create preview for the selected group
-                    this.createPreviewUnit(group.unitType, snappedX, snappedY);
-                    // Set rotation to match the original group
-                    this.previewUnits.forEach(previewUnit => {
-                        previewUnit.isVertical = unit.isVertical;
-                    });
-                    this.updatePreviewPosition(snappedX, snappedY, true);
+                    
                 }
             });
         }
@@ -189,14 +145,6 @@ export class UnitSystem {
         this.clearSelection();
     }
 
-    clearPreview() {
-        this.previewUnits.forEach(unit => {
-            if (unit) {
-                unit.destroy();
-            }
-        });
-        this.previewUnits = [];
-    }
 
     setActivePlacementType(unitType) {
         console.log('2a. Setting active placement type:', { unitType });
@@ -215,7 +163,6 @@ export class UnitSystem {
 
     clearPlacementSelection() {
         this.activePlacementType = null;
-        this.clearPreview();
         
         // Update UI buttons
         this.unitButtons.forEach(button => {
@@ -236,17 +183,6 @@ export class UnitSystem {
         this.clearAllSelections();
     }
 
-    toggleRotation() {
-        // Toggle rotation for all preview units
-        if (this.previewUnits.length > 0) {
-            this.previewUnits.forEach(unit => unit.toggleRotation());
-            
-            // Update preview positions with new rotation
-            const firstUnit = this.previewUnits[0];
-            const { x, y } = firstUnit.sprite;
-            this.updatePreviewPosition(x, y, true);
-        }
-    }
 
     // Check if a position is occupied by any unit
     isPositionOccupied(gridX, gridY) {
