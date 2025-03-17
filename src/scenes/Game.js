@@ -9,10 +9,26 @@ import { GRID, UI, TERRITORY, GAME, CAMERA } from "../configs/Constants";
 export class Game extends Scene {
   constructor() {
     super("Game");
+    
+    // Properties initialized with values
     this.previewUnit = null;
     this.gridGraphics = null;
     this.unitButtons = new Map();
     this.currentRound = 1;
+    
+    // Systems (initialized in create())
+    this.gridSystem = null;
+    this.resourceSystem = null;
+    this.unitSystem = null;
+    
+    // Game elements (initialized in create() and other methods)
+    this.gameContainer = null;
+    this.uiCamera = null;
+    this.wasd = null;
+    
+    // Unit buttons (initialized in createButtons())
+    this.ArcherButton = null;
+    this.warriorButton = null;
   }
 
   create() {
@@ -166,6 +182,27 @@ setupInputHandlers() {
     const placementType = this.unitSystem.getActivePlacementType();
     const selectedGroup = this.unitSystem.selectedUnitGroup;
 
+    // If a unit group is selected for repositioning, move it with the cursor
+    if (selectedGroup) {
+      const { snappedX, snappedY, gridX, gridY } = this.gridSystem.getGridPositionFromPointer(pointer, this.cameras.main);
+      const isVertical = selectedGroup.isVertical;
+      const unitCount = selectedGroup.units.length;
+      
+      // Check if the new position is valid
+      const canPlace = this.gridSystem.getTerritoryAt(gridY) === 'player' && 
+                       this.gridSystem.arePositionsAvailable(gridX, gridY, unitCount, isVertical);
+      
+      // Update unit positions to follow cursor
+      selectedGroup.units.forEach((unit, index) => {
+        unit.setPosition(
+          snappedX + (isVertical ? 0 : index * GRID.CELL_SIZE),
+          snappedY + (isVertical ? index * GRID.CELL_SIZE : 0)
+        );
+        
+        // Set visual feedback based on placement validity
+        unit.setAlpha(canPlace ? 0.5 : 0.3);
+      });
+    }
   });
 
   // Click handler

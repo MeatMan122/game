@@ -106,11 +106,8 @@ export class UnitSystem {
                 if (group) {
                     if (group.canReposition) {
                         this.selectedUnitGroup = group;
-                        // reset x/y coordinates that translate to grid positions to null so that we don't get invalid placement feedback
-                        // this.selectedUnitGroup.units.forEach(unit => {
-                        //     unit.gridX = null;
-                        //     unit.gridY = null;
-                        // });
+                        
+                        // Set initial alpha for selected units
                         this.selectedUnitGroup.units.forEach(unit => {
                             unit.setAlpha(0.5);
                         });
