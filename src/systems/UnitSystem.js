@@ -26,12 +26,12 @@ export class UnitSystem {
     }
 
     // Helper to create the appropriate unit type
-    createUnitInstance(unitType, x, y) {
-        switch(unitType) {
+    createUnitInstance(unitType) {
+        switch (unitType) {
             case UNIT_TYPES.WARRIOR:
-                return new Warrior(this.scene, x, y);
+                return new Warrior(this.scene);
             case UNIT_TYPES.ARCHER:
-                return new Archer(this.scene, x, y);
+                return new Archer(this.scene);
             default:
                 console.error('Unknown unit type:', unitType);
                 return null;
@@ -51,81 +51,149 @@ export class UnitSystem {
         return this.unitsById.get(id);
     }
 
-    
-
-    placeUnit(unitType, x, y) {
-        console.log('8. UnitSystem.placeUnit called:', { unitType, x, y });
+    createUnits(unitType) {
+        console.log('Creating Unit');
         const units = [];
         const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
-        const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
-        const isVertical =  false;
-        
-        // Check if positions are available based on rotation
-        if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
-            console.log('9. Position not available for placement');
-            return null;
-        }
-
-        console.log('9. Creating unit instances');
-        const positions = [];
-        // Create and place units based on rotation
         for (let i = 0; i < unitsPerPlacement; i++) {
             const unit = this.createUnitInstance(
-                unitType,
-                x + (isVertical ? 0 : i * GRID.CELL_SIZE),
-                y + (isVertical ? i * GRID.CELL_SIZE : 0)
+                unitType
             );
 
             if (!unit) continue;
 
-            unit.isVertical = isVertical;
-            
+            unit.isVertical = false;
+
             // Assign ID and track the unit
             this.assignUnitId(unit);
             unit.roundCreated = this.scene.currentRound;
-            units.push(unit);
-
-            // Store position for group placement
-            positions.push({
-                gridX: gridX + (isVertical ? 0 : i),
-                gridY: gridY + (isVertical ? i : 0)
-            });
 
             // Set up click handler
             unit.sprite.on('pointerdown', (pointer) => {
                 if (pointer.rightButtonDown()) return;
-                
+
                 const { snappedX, snappedY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
-                
+
                 // Clear unit selection but keep placement selection
                 this.clearUnitSelection();
-                
+
                 // Get the unit group using unit's groupId
                 const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
-                
+
                 if (group) {
                     if (group.canReposition) {
                         this.selectedUnitGroup = group;
-                        
+
                         // Set initial alpha for selected units
                         this.selectedUnitGroup.units.forEach(unit => {
                             unit.setAlpha(0.5);
                         });
                     }
                     else {
-                        this.scene.gridSystem.showInvalidPlacementFeedback(group.units);    
+                        this.scene.gridSystem.showInvalidPlacementFeedback(group.units);
                     }
                 }
             });
+
+            units.push(unit);
         }
 
-        console.log('10. Adding units to group');
         // Add the group
-        this.addUnitGroup(units, positions);
+        this.addUnitGroup(units);
 
-        console.log('11. Unit placement complete');
         return units;
     }
+    // unit: Unit
+    // snappedX/Y positions from gridSystem.snapToGrid
+    positionUnit(unit, snappedX, snappedY) {
+        const unitsPerPlacement = this.getUnitsPerPlacement(unit.unitType);
+        const { gridX, gridY } = this.scene.gridSystem.worldToGrid(snappedX, snappedY);
+        // Check if positions are available based on rotation
+        if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, unit.isVertical)) {
+            return null;
+        }
+        //get all units in group
+        const unitIds = this.unitGroups.get(unit.groupId);
+        const units = unitIds.map(unitId => this.unitsById.get(unitId));
+        // set position of all units (which should be deployment zone on create)
+        units.forEach((unit, i) => {
+            unit.setPosition(snappedX + (unit.isVertical ? 0 : i * GRID.CELL_SIZE),
+                snappedY + (unit.isVertical ? i * GRID.CELL_SIZE : 0))
+        })
+        return units;
+    }
+
+    // placeUnit(unitType, x, y) {
+    //     const units = [];
+    //     const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
+    //     const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
+    //     const isVertical = false;
+
+    //     // Check if positions are available based on rotation
+    //     if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
+    //         return null;
+    //     }
+
+    //     console.log('9. Creating unit instances');
+    //     const positions = [];
+    //     // Create and place units based on rotation
+    //     for (let i = 0; i < unitsPerPlacement; i++) {
+    //         const unit = this.createUnitInstance(
+    //             unitType,
+    //             x + (isVertical ? 0 : i * GRID.CELL_SIZE),
+    //             y + (isVertical ? i * GRID.CELL_SIZE : 0)
+    //         );
+
+    //         if (!unit) continue;
+
+    //         unit.isVertical = isVertical;
+
+    //         // Assign ID and track the unit
+    //         this.assignUnitId(unit);
+    //         unit.roundCreated = this.scene.currentRound;
+    //         units.push(unit);
+
+    //         // Store position for group placement
+    //         positions.push({
+    //             gridX: gridX + (isVertical ? 0 : i),
+    //             gridY: gridY + (isVertical ? i : 0)
+    //         });
+
+    //         // Set up click handler
+    //         unit.sprite.on('pointerdown', (pointer) => {
+    //             if (pointer.rightButtonDown()) return;
+
+    //             const { snappedX, snappedY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
+
+    //             // Clear unit selection but keep placement selection
+    //             this.clearUnitSelection();
+
+    //             // Get the unit group using unit's groupId
+    //             const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
+
+    //             if (group) {
+    //                 if (group.canReposition) {
+    //                     this.selectedUnitGroup = group;
+
+    //                     // Set initial alpha for selected units
+    //                     this.selectedUnitGroup.units.forEach(unit => {
+    //                         unit.setAlpha(0.5);
+    //                     });
+    //                 }
+    //                 else {
+    //                     this.scene.gridSystem.showInvalidPlacementFeedback(group.units);
+    //                 }
+    //             }
+    //         });
+    //     }
+
+    //     console.log('10. Adding units to group');
+    //     // Add the group
+    //     this.addUnitGroup(units, positions);
+
+    //     console.log('11. Unit placement complete');
+    //     return units;
+    // }
 
     moveSelectedGroup(x, y) {
         if (!this.selectedUnitGroup) return;
@@ -138,10 +206,10 @@ export class UnitSystem {
         if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
             return;
         }
-        
+
         // Remove the group
         this.removeUnitGroup(this.selectedUnitGroup);
-        
+
         // Then destroy the units and clean up tracking
         this.selectedUnitGroup.units.forEach(unit => {
             this.unitsById.delete(unit.id);
@@ -189,10 +257,15 @@ export class UnitSystem {
             .some(unit => unit.gridX === gridX && unit.gridY === gridY);
     }
 
+    // DTB: This is likely cruft or needs to be refactored to fit into the simpler system of creation/deployment.
+    // Getting should consist of
+    // 1. Get group ID of unit under click (or pass in unit - maybe an overload)
+    // 2. Get group of unit IDs from this.unitGroups
+    // 3. Get individual units from this.unitsById.get(unit.unitId)
     getUnitGroup(gridX, gridY) {
         const unit = Array.from(this.unitsById.values())
             .find(unit => unit.gridX === gridX && unit.gridY === gridY);
-        
+
         if (!unit || unit.groupId === null) return null;
 
         const groupUnits = Array.from(this.unitsById.values())
@@ -211,16 +284,12 @@ export class UnitSystem {
     }
 
     // Group management methods
-    addUnitGroup(units, positions) {
+    addUnitGroup(units) {
         const groupId = this.nextGroupId++;
         const unitIds = [];
 
-        for (let i = 0; i < units.length; i++) {
-            const unit = units[i];
-            const pos = positions[i];
-            
+        for (let unit of units) {
             unit.groupId = groupId;
-            unit.updateGridPosition(pos.gridX, pos.gridY);
             unitIds.push(unit.id);
         }
 
@@ -230,7 +299,7 @@ export class UnitSystem {
 
     removeUnitGroup(group) {
         if (!group || group.units.length === 0) return false;
-        
+
         const groupId = group.units[0].groupId;
         if (groupId === null) return false;
 

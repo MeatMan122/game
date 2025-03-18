@@ -1,5 +1,5 @@
 export class Unit {
-    constructor(scene, x, y, unitType) {
+    constructor(scene, unitType) {
         this.scene = scene;
         this.unitType = unitType;
         this.id = null; // Will be set by UnitSystem
@@ -10,11 +10,11 @@ export class Unit {
         this.gridY = null; // Current grid position Y
         this.roundCreated = null;
         // Create the sprite
-        this.createSprite(x, y);
+        this.createSprite();
     }
 
-    createSprite(x, y) {
-        this.sprite = this.scene.add.sprite(x, y, `${this.unitType}-idle`, 0);
+    createSprite() {
+        this.sprite = this.scene.add.sprite(0, 0, `${this.unitType}-idle`, 0);
         this.sprite.play(`${this.unitType}-idle`);
         this.sprite.setInteractive();
         this.sprite.unit = this; // Reference back to this Unit instance

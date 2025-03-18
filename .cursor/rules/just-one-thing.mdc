@@ -1,0 +1,10 @@
+---
+description: The Single Responsibility Principle
+globs: 
+alwaysApply: false
+---
+
+# Functions and Methods should do just one thing
+
+- A function should do one thing, and it should have a name that represents that thing.
+- Good = "function called decrement health decrements an input unit's health property", BAD = "decrement health decrement's health and also destroys the unit if health goes below zero"
