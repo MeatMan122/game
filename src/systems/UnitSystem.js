@@ -6,8 +6,6 @@ import { Archer } from "../units/Archer";
 export class UnitSystem {
     constructor(scene) {
         this.scene = scene;
-        // For tracking which unit type is ready for placement (from button selection)
-        this.activePlacementType = null;
         // For tracking existing units/groups selected on the board
         this.selectedUnitGroup = null;
         this.unitButtons = new Map();
@@ -109,7 +107,7 @@ export class UnitSystem {
         const unitsPerPlacement = this.getUnitsPerPlacement(unit.unitType);
         const { gridX, gridY } = this.scene.gridSystem.worldToGrid(snappedX, snappedY);
         // Check if positions are available based on rotation
-        if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, unit.isVertical)) {
+        if (!this.scene.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitsPerPlacement, unit.isVertical)) {
             return null;
         }
         //get all units in group
@@ -130,7 +128,7 @@ export class UnitSystem {
     //     const isVertical = false;
 
     //     // Check if positions are available based on rotation
-    //     if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
+    //     if (!this.scene.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitsPerPlacement, isVertical)) {
     //         return null;
     //     }
 
@@ -195,54 +193,39 @@ export class UnitSystem {
     //     return units;
     // }
 
-    moveSelectedGroup(x, y) {
-        if (!this.selectedUnitGroup) return;
+    // moveSelectedGroup(x, y) {
+    //     if (!this.selectedUnitGroup) return;
 
-        const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
-        const unitsPerPlacement = this.getUnitsPerPlacement(this.selectedUnitGroup.unitType);
-        const isVertical = this.selectedUnitGroup.isVertical;
+    //     const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
+    //     const unitsPerPlacement = this.getUnitsPerPlacement(this.selectedUnitGroup.unitType);
+    //     const isVertical = this.selectedUnitGroup.isVertical;
 
-        // Check if new positions are available
-        if (!this.scene.gridSystem.arePositionsAvailable(gridX, gridY, unitsPerPlacement, isVertical)) {
-            return;
-        }
+    //     // Check if new positions are available
+    //     if (!this.scene.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitsPerPlacement, isVertical)) {
+    //         return;
+    //     }
 
-        // Remove the group
-        this.removeUnitGroup(this.selectedUnitGroup);
+    //     // Remove the group
+    //     this.removeUnitGroup(this.selectedUnitGroup);
 
-        // Then destroy the units and clean up tracking
-        this.selectedUnitGroup.units.forEach(unit => {
-            this.unitsById.delete(unit.id);
-            unit.destroy();
-        });
+    //     // Then destroy the units and clean up tracking
+    //     this.selectedUnitGroup.units.forEach(unit => {
+    //         this.unitsById.delete(unit.id);
+    //         unit.destroy();
+    //     });
 
-        // Place units at new positions
-        this.placeUnit(this.selectedUnitGroup.unitType, x, y);
+    //     // Place units at new positions
+    //     this.placeUnit(this.selectedUnitGroup.unitType, x, y);
 
-        this.clearSelection();
-    }
+    //     this.clearSelection();
+    // }
 
-
-    setActivePlacementType(unitType) {
-        console.log('2a. Setting active placement type:', { unitType });
-        this.activePlacementType = unitType;
-        this.clearUnitSelection(); // Clear any selected units on the board
-    }
-
-    getActivePlacementType() {
-        return this.activePlacementType;
-    }
-
-    clearPlacementSelection() {
-        this.activePlacementType = null;
-    }
 
     clearUnitSelection() {
         this.selectedUnitGroup = null;
     }
 
     clearAllSelections() {
-        this.clearPlacementSelection();
         this.clearUnitSelection();
     }
 

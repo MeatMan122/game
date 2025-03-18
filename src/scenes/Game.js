@@ -136,7 +136,7 @@ export class Game extends Scene {
       size: size,
       color: UNIT_CONFIGS[unitType].color,
       name: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
-      onClick: this.handleCreateUnitButtonClick(unitType)
+      onClick: () =>this.handleCreateUnitButtonClick(unitType)
     });
     button.setDepth(GAME.UI.BUTTON.DEPTH);
     this.unitSystem.registerButton(unitType, button);
@@ -145,7 +145,6 @@ export class Game extends Scene {
 
   handleCreateUnitButtonClick(unitType) {
     if (this.resourceSystem.canAfford(unitType)) {
-      this.unitSystem.setActivePlacementType(unitType); // what does this do?
       const { snappedX, snappedY } = this.gridSystem.getCoordinatesForUnitDeployment(unitType);
 
       // Deduct cost and place unit
@@ -182,7 +181,6 @@ export class Game extends Scene {
 
     // Mouse move handler
     this.input.on('pointermove', (pointer) => {
-      const placementType = this.unitSystem.getActivePlacementType();
       const selectedGroup = this.unitSystem.selectedUnitGroup;
 
       // If a unit group is selected for repositioning, move it with the cursor
@@ -193,7 +191,7 @@ export class Game extends Scene {
 
         // Check if the new position is valid
         const canPlace = this.gridSystem.getTerritoryAt(gridY) === 'player' &&
-          this.gridSystem.arePositionsAvailable(gridX, gridY, unitCount, isVertical);
+          this.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitCount, isVertical);
 
         // Update unit positions to follow cursor
         selectedGroup.units.forEach((unit, index) => {
@@ -214,41 +212,20 @@ export class Game extends Scene {
 
       const { snappedX, snappedY, gridX, gridY } = this.gridSystem.getGridPositionFromPointer(pointer, this.cameras.main);
 
-      const placementType = this.unitSystem.getActivePlacementType();
       const selectedGroup = this.unitSystem.selectedUnitGroup;
 
-      if (!placementType && !selectedGroup) return;
-
-      console.log('5. Attempting to place unit:', { placementType, gridX, gridY });
-
-      const unitType = placementType || selectedGroup.unitType;
-      const unitsPerPlacement = UNIT_CONFIGS[unitType].unitsPerPlacement;
-      const isVertical = false;
-
+      if (!selectedGroup) return;
       // Check if all units in the line can be placed
-      let canPlace = true;
-
-      // Check territory and available positions
-      if (this.gridSystem.getTerritoryAt(gridY) !== 'player') {
-        console.log('6. Cannot place: invalid territory');
-        canPlace = false;
-      } else {
-        canPlace = this.gridSystem.arePositionsAvailable(
+      let canPlace = this.gridSystem.isValidUnoccupiedPosition(
           gridX,
           gridY,
-          unitsPerPlacement,
-          isVertical
+          selectedGroup.units.length,
+          selectedGroup.isVertical
         );
-        console.log('6. Position availability check:', { canPlace });
-      }
 
       if (canPlace) {
-        if (selectedGroup) {
-          console.log('7. Moving existing group');
-          this.unitSystem.moveSelectedGroup(snappedX, snappedY);
-        }
+          this.unitSystem.positionUnit(selectedGroup.units[0], snappedX, snappedY);
       } else {
-        console.log('7. Showing invalid placement feedback');
         this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.selectedUnitGroup.units);
       }
     });

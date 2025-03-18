@@ -56,13 +56,14 @@ export class GridSystem {
     }
 
     // Check if a range of grid positions is available
-    arePositionsAvailable(gridX, gridY, length, isVertical = false) {
+    isValidUnoccupiedPosition(gridX, gridY, length, isVertical = false) {
         for (let i = 0; i < length; i++) {
             const currentX = gridX + (isVertical ? 0 : i);
             const currentY = gridY + (isVertical ? i : 0);
             
             if (!this.isValidGridPosition(currentX, currentY) || 
-                this.scene.unitSystem.isPositionOccupied(currentX, currentY)) {
+                this.scene.unitSystem.isPositionOccupied(currentX, currentY)||
+                this.getTerritoryAt(gridY) !== 'player') {
                 return false;
             }
         }
@@ -213,7 +214,7 @@ export class GridSystem {
         const maxGridY = this.worldToGrid(0, playerDeploymentY + deploymentZoneWidth).gridY - (unitSize - 1);
     
         // Check center first
-        if (this.arePositionsAvailable(centerGrid.gridX, centerGrid.gridY, unitSize)) {
+        if (this.isValidUnoccupiedPosition(centerGrid.gridX, centerGrid.gridY, unitSize)) {
             return this.snapToGrid(this.deploymentZoneCenterX, this.deploymentZoneCenterY);
         }
     
@@ -234,7 +235,7 @@ export class GridSystem {
                 if (testGridX >= minGridX && testGridX <= maxGridX &&
                     testGridY >= minGridY && testGridY <= maxGridY) {
                     
-                    if (this.arePositionsAvailable(testGridX, testGridY, unitSize)) {
+                    if (this.isValidUnoccupiedPosition(testGridX, testGridY, unitSize)) {
                         const worldPos = this.snapToGrid(
                             GRID.PADDING.LEFT + (testGridX * GRID.CELL_SIZE) + (GRID.CELL_SIZE / 2),
                             GRID.PADDING.TOP + (testGridY * GRID.CELL_SIZE) + (GRID.CELL_SIZE / 2)
