@@ -24,6 +24,9 @@ export class Unit {
     setPosition(x, y) {
         if (this.sprite) {
             this.sprite.setPosition(x, y);
+            const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
+            this.gridX = gridX;
+            this.gridY = gridY;
         }
     }
 
@@ -53,6 +56,7 @@ export class Unit {
     }
 
     // Update grid position
+    // DTB - this may not be necessary given we have setPosition
     updateGridPosition(gridX, gridY) {
         this.gridX = gridX;
         this.gridY = gridY;

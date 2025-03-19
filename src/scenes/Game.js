@@ -50,6 +50,9 @@ export class Game extends Scene {
     // Create UI
     this.createUnitSelectionMenu();
 
+    // Disable browser context menu on right click
+    this.disableBrowserContextMenu();
+
     // Set up input handlers
     this.setupInputHandlers();
   }
@@ -251,6 +254,14 @@ export class Game extends Scene {
     this.input.keyboard.on('keydown-T', () => {
       // this.unitSystem.toggleRotation();
     });
+  }
+
+  disableBrowserContextMenu() {
+    // Disable the browser's default context menu that appears on right-click
+    this.game.canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    }, false);
   }
 
   update() {

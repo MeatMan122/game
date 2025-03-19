@@ -25,15 +25,45 @@ export class UnitSystem {
 
     // Helper to create the appropriate unit type
     createUnitInstance(unitType) {
+        let unit = null;
         switch (unitType) {
             case UNIT_TYPES.WARRIOR:
-                return new Warrior(this.scene);
+                unit = new Warrior(this.scene);
+                break;
             case UNIT_TYPES.ARCHER:
-                return new Archer(this.scene);
+                unit = new Archer(this.scene);
+                break;
             default:
                 console.error('Unknown unit type:', unitType);
                 return null;
         }
+        unit.isVertical = false;
+        // Assign ID and track the unit
+        this.assignUnitId(unit);
+        unit.roundCreated = this.scene.currentRound;
+        unit.sprite.on('pointerdown', (pointer) => {
+            if (pointer.rightButtonDown()) return;
+            // Clear unit selection but keep placement selection
+            this.clearUnitSelection();
+
+            // Get the unit group using unit's groupId
+            const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
+
+            if (group) {
+                if (group.canReposition) {
+                    this.selectedUnitGroup = group;
+
+                    // Set initial alpha for selected units
+                    this.selectedUnitGroup.units.forEach(unit => {
+                        unit.setAlpha(0.5);
+                    });
+                }
+                else {
+                    this.scene.gridSystem.showInvalidPlacementFeedback(group.units);
+                }
+            }
+        });
+        return unit;
     }
 
     // Helper to assign an ID to a unit
@@ -50,49 +80,13 @@ export class UnitSystem {
     }
 
     createUnits(unitType) {
-        console.log('Creating Unit');
         const units = [];
         const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
         for (let i = 0; i < unitsPerPlacement; i++) {
             const unit = this.createUnitInstance(
                 unitType
             );
-
             if (!unit) continue;
-
-            unit.isVertical = false;
-
-            // Assign ID and track the unit
-            this.assignUnitId(unit);
-            unit.roundCreated = this.scene.currentRound;
-
-            // Set up click handler
-            unit.sprite.on('pointerdown', (pointer) => {
-                if (pointer.rightButtonDown()) return;
-
-                const { snappedX, snappedY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
-
-                // Clear unit selection but keep placement selection
-                this.clearUnitSelection();
-
-                // Get the unit group using unit's groupId
-                const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
-
-                if (group) {
-                    if (group.canReposition) {
-                        this.selectedUnitGroup = group;
-
-                        // Set initial alpha for selected units
-                        this.selectedUnitGroup.units.forEach(unit => {
-                            unit.setAlpha(0.5);
-                        });
-                    }
-                    else {
-                        this.scene.gridSystem.showInvalidPlacementFeedback(group.units);
-                    }
-                }
-            });
-
             units.push(unit);
         }
 
