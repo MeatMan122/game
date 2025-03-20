@@ -31,7 +31,7 @@ export const UI = {
 };
 
 export const RESOURCES = {
-    STARTING_GOLD: 500,
+    STARTING_GOLD: 250,
     DISPLAY: {
         FONT_SIZE: '24px',
         COLOR: '#FFD700',

@@ -11,6 +11,7 @@ export class Unit {
         this.roundCreated = null;
         // Create the sprite
         this.createSprite();
+        this.isRepositioning = false;
     }
 
     createSprite() {

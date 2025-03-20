@@ -227,6 +227,11 @@ export class Game extends Scene {
         );
 
       if (canPlace) {
+        //DTB: The problem here is we are clearing selection, which has to happen in order to 
+        // pause the listener that is handling mousemove, but because we clear it
+        // we are also stopping it from doing it's job at all. There should be a solution
+        // by making use of the different flags, such as isRepositioning.
+        this.unitSystem.clearUnitSelection();
           this.unitSystem.positionUnit(selectedGroup.units[0], snappedX, snappedY);
       } else {
         this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.selectedUnitGroup.units);
@@ -236,7 +241,7 @@ export class Game extends Scene {
     // Right-click handler
     this.input.on('pointerdown', (pointer) => {
       if (pointer.rightButtonDown()) {
-        this.unitSystem.clearAllSelections();
+        this.unitSystem.clearUnitSelection();
       }
     });
 
