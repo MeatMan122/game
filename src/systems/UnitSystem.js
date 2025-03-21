@@ -42,9 +42,47 @@ export class UnitSystem {
         // Assign ID and track the unit
         this.assignUnitId(unit);
         unit.roundCreated = this.scene.currentRound;
+        let lastClickTime = 0;
         unit.sprite.on('pointerdown', (pointer) => {
             if (pointer.rightButtonDown()) return;
+            const currentTime = pointer.time;
+            const timeSinceLastClick = currentTime - lastClickTime;
+            
+            // Check if this is a double-click (typically 300-500ms threshold)
+            if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
+                console.log('Double click detected');
+                // Handle double-click logic here
+                return;
+            }
+            lastClickTime = currentTime;
+            console.log('single clicked');
             // DTB: I'm not certain we still want to clear the selection here
+            const selectedUnitGroup = this.selectedUnitGroup;
+            const clickedUnitGroup = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
+            /*
+            If we have another unit selected AND that unit can reposition,
+            then when we click this unit, it should do nothing.
+            the other unit should remain selected until we either place this unit or deselect it.
+            If the other unit cannot reposition, then we should clear the selection and select this unit.
+
+            If we have no unit selected, then we should select this unit, and find out if it can reposition.
+
+            if it can, then we start the repositioning process.
+
+            if it cannot, then we need a way of visualizing the selected state that cannot be moved.
+            Note: it would also be good to have a visualization of all units which CAN be repositioned.
+            that way players know at a glance which units can be moved.
+
+            */
+           // DTB: This is the check for another unit already being repositioned, in which case we can't click this unit.
+           // It seems phaser prioritizes the unit which is not being repositioned first,
+           // so when we have a unit which is repositioning, and we click the next unit on the ground, 
+           // the unit on the ground handles its click event first.
+            if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning &&
+                this.selectedUnitGroup !== this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY)) {
+                // do nothing
+                return;
+            }
             this.clearUnitSelection();
 
             // Get the unit group using unit's groupId
@@ -63,6 +101,11 @@ export class UnitSystem {
                     this.scene.gridSystem.showInvalidPlacementFeedback(group.units);
                 }
             }
+        });
+
+        // Track last click time for double-click detection
+        unit.sprite.on('pointerdown', (pointer) => {
+            
         });
         return unit;
     }
@@ -112,7 +155,9 @@ export class UnitSystem {
         units.forEach((unit, i) => {
             unit.setPosition(snappedX + (unit.isVertical ? 0 : i * GRID.CELL_SIZE),
                 snappedY + (unit.isVertical ? i * GRID.CELL_SIZE : 0))
+            unit.setAlpha(1);
         })
+        // this.clearUnitSelection();
         return units;
     }
 

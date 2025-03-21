@@ -209,7 +209,7 @@ export class Game extends Scene {
       }
     });
 
-    // Click handler
+    // Click handler for non-unit events/objects
     this.input.on('pointerdown', (pointer) => {
       if (pointer.y > this.scale.height - UI.PANEL_HEIGHT) return;
 
@@ -231,7 +231,7 @@ export class Game extends Scene {
         // pause the listener that is handling mousemove, but because we clear it
         // we are also stopping it from doing it's job at all. There should be a solution
         // by making use of the different flags, such as isRepositioning.
-        this.unitSystem.clearUnitSelection();
+        // this.unitSystem.clearUnitSelection();
           this.unitSystem.positionUnit(selectedGroup.units[0], snappedX, snappedY);
       } else {
         this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.selectedUnitGroup.units);
