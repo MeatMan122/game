@@ -1,5 +1,5 @@
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UNIT } from "../configs/Constants";
+import { GRID, UNIT, UI } from "../configs/Constants";
 import { Warrior } from "../units/Warrior";
 import { Archer } from "../units/Archer";
 import { UnitGroup } from "../units/UnitGroup";
@@ -14,6 +14,70 @@ export class UnitSystem {
         this.unitsById = new Map(); // Track all units by their ID
         this.nextGroupId = 1;
         this.unitGroups = new Map(); // Map of groupId to array of unit IDs
+        
+        // Setup global input handlers for unit repositioning
+        this.setupGlobalInputHandlers();
+    }
+    
+    setupGlobalInputHandlers() {
+        // Add global mouse move handler for unit repositioning
+        this.scene.input.on('pointermove', (pointer) => {
+            this.handlePointerMove(pointer);
+        });
+        
+        // Add global click handler for unit placement
+        this.scene.input.on('pointerdown', (pointer) => {
+            // Ignore clicks in UI area
+            if (pointer.y > this.scene.scale.height - UI.PANEL_HEIGHT) return;
+            
+            // Only process left clicks
+            if (pointer.leftButtonDown()) {
+                this.handleGlobalClick(pointer);
+            }
+        });
+        
+        // Add T key handler for unit rotation
+        this.scene.input.keyboard.on('keydown-T', () => {
+            if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
+                this.selectedUnitGroup.toggleRotation();
+            }
+        });
+    }
+    
+    handlePointerMove(pointer) {
+        // If a unit group is selected for repositioning, update its position
+        if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
+            this.selectedUnitGroup.followPointer(pointer, this.scene.gridSystem);
+        }
+    }
+    
+    handleGlobalClick(pointer) {
+        console.group('UnitSystem - Global Click Handler');
+        console.log('Global click at:', { x: pointer.x, y: pointer.y, detail: pointer.event.detail });
+        
+        // Ignore double-clicks - those should be handled by the Unit component
+        if (pointer.event && pointer.event.detail > 1) {
+            console.log('Ignoring global double-click');
+            console.groupEnd();
+            return;
+        }
+        
+        // If we have a selected unit group that's repositioning, attempt to place it
+        if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
+            const { snappedX, snappedY, gridX, gridY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
+            console.log('Attempting to place unit at grid position:', { gridX, gridY });
+            
+            // Try to place the unit group
+            const success = this.selectedUnitGroup.placeAtPosition(
+                gridX, gridY, snappedX, snappedY, this, this.scene.gridSystem
+            );
+            
+            if (success) {
+                this.clearUnitSelection();
+            }
+        }
+        
+        console.groupEnd();
     }
 
     registerButton(unitType, button) {
@@ -42,103 +106,48 @@ export class UnitSystem {
         // Assign ID and track the unit
         this.assignUnitId(unit);
         unit.roundCreated = this.scene.currentRound;
-        let lastClickTime = 0;
-        unit.sprite.on('pointerdown', (pointer) => {
-            if (pointer.rightButtonDown()) return;
-
-            console.group('UnitSystem - Unit Click Handler');
-            const currentTime = pointer.time;
-            const timeSinceLastClick = currentTime - lastClickTime;
-
-            /*
-            ============================================
-            ================== DOUBLE CLICK ============
-            */
-            // Check if this is a double-click (typically 300-500ms threshold)
-            if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
-                this.handleUnitDoubleClick(pointer, unit);
-                console.groupEnd();
-                return;
-            }
-            // Track last click time for double-click detection
-            lastClickTime = currentTime;
-            /*
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-           ^^^^^^^^^^^^^^^^^^^^ END DOUBLE CLICK ^^^^^^^^^^^
-           */
-            /*
-             ############################################
-             ================== SINGLE  CLICK ============
-             ############################################
-             */
-            this.handleUnitSingleClick(pointer, unit);
-            console.groupEnd();
-            /*
-
-
-            if it can, then we start the repositioning process.
-
-            if it cannot, then we need a way of visualizing the selected state that cannot be moved.
-            Note: it would also be good to have a visualization of all units which CAN be repositioned.
-            that way players know at a glance which units can be moved.
-
-            */
-        });
-
-
+        
         return unit;
     }
-
-    handleUnitDoubleClick(pointer, unit) {
-        console.group('UnitSystem - Double Click Handler', pointer.event.detail);
-        console.log('Unit double-clicked:', { 
-            unitType: unit.unitType, 
-            id: unit.id, 
-            position: { gridX: unit.gridX, gridY: unit.gridY } 
-        });
+    
+    // Select a unit group
+    selectUnitGroup(group) {
+        console.log('Selecting unit group:', group ? group.unitType : 'none');
         
-        //handle repositioning
-        if (this.selectedUnitGroup && this.selectedUnitGroup.canReposition) {
-            console.log('Unit group can be repositioned - setting repositioning state');
-            this.selectedUnitGroup.setRepositioning();
-            // Set initial alpha for selected units
-            this.selectedUnitGroup.units.forEach(unit => {
-                unit.setAlpha(0.5);
-            });
-        } else {
-            console.log('Unit group cannot be repositioned or no group selected');
-        }
-        console.groupEnd();
-    }
-
-    handleUnitSingleClick(pointer, unit) {
-        console.group('UnitSystem - Single Click Handler', pointer.event.detail);
-        console.log('Unit single-clicked:', { 
-            unitType: unit.unitType, 
-            id: unit.id, 
-            position: { gridX: unit.gridX, gridY: unit.gridY } 
-        });
-        
-        // Just handle selection
-        const clickedUnitGroup = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
-        console.log('Retrieved unit group:', clickedUnitGroup ? {
-            unitType: clickedUnitGroup.unitType,
-            canReposition: clickedUnitGroup.canReposition,
-            unitCount: clickedUnitGroup.units.length
-        } : 'No group found');
-
-        // If another unit is being repositioned, don't change selection
-        if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning &&
-            this.selectedUnitGroup !== clickedUnitGroup) {
-            console.log('Another unit group is being repositioned - ignoring click');
-            console.groupEnd();
+        // If we already have a selected group that's repositioning, ignore
+        if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
+            console.log('Ignoring selection, another group is being repositioned');
             return;
         }
-
-        // Set the selected unit group
-        console.log('Setting selected unit group');
-        this.selectedUnitGroup = clickedUnitGroup;
-        console.groupEnd();
+        
+        // Deselect current group if any
+        if (this.selectedUnitGroup) {
+            this.selectedUnitGroup.setSelected(false);
+        }
+        
+        // Set new selected group
+        this.selectedUnitGroup = group;
+        
+        // Mark as selected
+        if (group) {
+            group.setSelected(true);
+        }
+    }
+    
+    // Start repositioning a unit group
+    startRepositioningGroup(group) {
+        if (!group || !group.canReposition) {
+            console.log('Group cannot be repositioned');
+            return;
+        }
+        
+        // Select the group first (if not already selected)
+        this.selectUnitGroup(group);
+        
+        // Set repositioning state
+        group.setRepositioning(true);
+        
+        console.log('Started repositioning unit group:', group.unitType);
     }
 
     // Helper to assign an ID to a unit
@@ -170,6 +179,7 @@ export class UnitSystem {
 
         return units;
     }
+    
     // unit: Unit
     // snappedX/Y positions from gridSystem.snapToGrid
     positionUnit(unit, snappedX, snappedY) {
@@ -189,19 +199,17 @@ export class UnitSystem {
             unit.setAlpha(1);
             unit.isRepositioning = false;
         })
-        // this.clearUnitSelection();
         return units;
     }
 
     clearUnitSelection() {
         if (this.selectedUnitGroup) {
-            // Reset alpha and repositioning flags for units in the group
-            this.selectedUnitGroup.units.forEach(unit => {
-                unit.setAlpha(1);
-                unit.isRepositioning = false;
-            });
+            // Reset states for the group
+            this.selectedUnitGroup.setRepositioning(false);
+            this.selectedUnitGroup.setSelected(false);
         }
         this.selectedUnitGroup = null;
+        console.log('Cleared unit selection');
     }
 
     isPositionOccupied(gridX, gridY) {
@@ -212,11 +220,6 @@ export class UnitSystem {
             })
     }
 
-    // DTB: This is likely cruft or needs to be refactored to fit into the simpler system of creation/deployment.
-    // Getting should consist of
-    // 1. Get group ID of unit under click (or pass in unit - maybe an overload)
-    // 2. Get group of unit IDs from this.unitGroups
-    // 3. Get individual units from this.unitsById.get(unit.unitId)
     getUnitGroup(gridX, gridY) {
         const unit = Array.from(this.unitsById.values())
             .find(unit => unit.gridX === gridX && unit.gridY === gridY);

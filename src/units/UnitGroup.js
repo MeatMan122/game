@@ -1,3 +1,5 @@
+import { GRID } from "../configs/Constants";
+
 export class UnitGroup {
     constructor({
         units,
@@ -13,19 +15,98 @@ export class UnitGroup {
         this.gridPositions = gridPositions;
         this.isVertical = isVertical;
         this.isRepositioning = isRepositioning;
+        this.isSelected = false;
     }
 
-    setRepositioning() {
-        this.isRepositioning = true;
+    setSelected(selected) {
+        this.isSelected = selected;
+        // Update all units in the group
         this.units.forEach(unit => {
-            unit.isRepositioning = true;
+            unit.setSelected(selected);
+        });
+        
+        console.log(`Unit group ${selected ? 'selected' : 'deselected'}: ${this.unitType}`);
+    }
+
+    setRepositioning(repositioning = true) {
+        console.log(`Setting repositioning to ${repositioning} for unit group: ${this.unitType}`);
+        this.isRepositioning = repositioning;
+        this.units.forEach(unit => {
+            unit.setRepositioning(repositioning);
         });
     }
 
     clearRepositioning() {
-        this.isRepositioning = false;
-        this.units.forEach(unit => {
-            unit.isRepositioning = false;
+        this.setRepositioning(false);
+    }
+    
+    followPointer(pointer, gridSystem) {
+        if (!this.isRepositioning) return;
+        
+        // Get the main camera from the scene
+        const camera = this.units[0].scene.cameras.main;
+        
+        // Get the grid position from the pointer
+        const { snappedX, snappedY, gridX, gridY } = gridSystem.getGridPositionFromPointer(pointer, camera);
+        
+        // Check if the new position is valid
+        const isValid = this.isValidPlacement(gridX, gridY, gridSystem);
+        
+        // Update unit positions to follow cursor
+        this.units.forEach((unit, index) => {
+            unit.setPosition(
+                snappedX + (this.isVertical ? 0 : index * GRID.CELL_SIZE),
+                snappedY + (this.isVertical ? index * GRID.CELL_SIZE : 0)
+            );
+            
+            // Set visual feedback based on placement validity
+            unit.setAlpha(isValid ? 0.5 : 0.3);
         });
+        
+        return { isValid, gridX, gridY, snappedX, snappedY };
+    }
+    
+    isValidPlacement(gridX, gridY, gridSystem) {
+        // Check if in player territory and position is valid
+        return gridSystem.getTerritoryAt(gridY) === 'player' &&
+               gridSystem.isValidUnoccupiedPosition(gridX, gridY, this.units.length, this.isVertical);
+    }
+    
+    placeAtPosition(gridX, gridY, snappedX, snappedY, unitSystem, gridSystem) {
+        // Verify placement is valid
+        if (!this.isValidPlacement(gridX, gridY, gridSystem)) {
+            console.log('Invalid placement position');
+            gridSystem.showInvalidPlacementFeedback(this.units);
+            return false;
+        }
+        
+        // Position the units
+        const placedUnits = unitSystem.positionUnit(this.units[0], snappedX, snappedY);
+        
+        if (!placedUnits) {
+            console.log('Unit placement failed');
+            return false;
+        }
+        
+        // Clear repositioning state
+        this.clearRepositioning();
+        
+        // Clear selection
+        this.setSelected(false);
+        
+        // Clear the UnitSystem's selection
+        if (unitSystem.selectedUnitGroup === this) {
+            unitSystem.clearUnitSelection();
+        }
+        
+        console.log('Unit group placed successfully');
+        return true;
+    }
+    
+    toggleRotation() {
+        if (!this.isRepositioning) return;
+        
+        this.isVertical = !this.isVertical;
+        console.log(`Unit group rotation changed: isVertical=${this.isVertical}`);
     }
 } 
