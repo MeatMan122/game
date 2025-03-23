@@ -212,29 +212,31 @@ export class Game extends Scene {
     // Click handler for non-unit events/objects
     this.input.on('pointerdown', (pointer) => {
       if (pointer.y > this.scale.height - UI.PANEL_HEIGHT) return;
-
-      const { snappedX, snappedY, gridX, gridY } = this.gridSystem.getGridPositionFromPointer(pointer, this.cameras.main);
-
-      const selectedGroup = this.unitSystem.selectedUnitGroup;
-
-      if (!selectedGroup) return;
-      // Check if all units in the line can be placed
-      let canPlace = this.gridSystem.isValidUnoccupiedPosition(
-          gridX,
-          gridY,
-          selectedGroup.units.length,
-          selectedGroup.isVertical
-        );
-
-      if (canPlace) {
-        //DTB: The problem here is we are clearing selection, which has to happen in order to 
-        // pause the listener that is handling mousemove, but because we clear it
-        // we are also stopping it from doing it's job at all. There should be a solution
-        // by making use of the different flags, such as isRepositioning.
-        // this.unitSystem.clearUnitSelection();
-          this.unitSystem.positionUnit(selectedGroup.units[0], snappedX, snappedY);
-      } else {
-        this.gridSystem.showInvalidPlacementFeedback(this.unitSystem.selectedUnitGroup.units);
+      
+      // Only process left clicks on the game area (not UI)
+      if (pointer.leftButtonDown()) {
+        const selectedGroup = this.unitSystem.selectedUnitGroup;
+        
+        // If we have a selected unit group that's repositioning, attempt to place it
+        if (selectedGroup && selectedGroup.isRepositioning) {
+          const { snappedX, snappedY, gridX, gridY } = this.gridSystem.getGridPositionFromPointer(pointer, this.cameras.main);
+          const isVertical = selectedGroup.isVertical;
+          const unitCount = selectedGroup.units.length;
+          
+          // Check if placement is valid
+          if (this.gridSystem.getTerritoryAt(gridY) === 'player' && 
+              this.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitCount, isVertical)) {
+            
+            // Place the first unit (which will place the entire group)
+            this.unitSystem.positionUnit(selectedGroup.units[0], snappedX, snappedY);
+            
+            // Clear selection after successful placement
+            this.unitSystem.clearUnitSelection();
+          } else {
+            // Show invalid placement feedback
+            this.gridSystem.showInvalidPlacementFeedback(selectedGroup.units);
+          }
+        }
       }
     });
 
@@ -257,7 +259,7 @@ export class Game extends Scene {
 
     // Add T key handler for unit rotation
     this.input.keyboard.on('keydown-T', () => {
-      // this.unitSystem.toggleRotation();
+      this.unitSystem.selectedUnitGroup.units.forEach(u => u.toggleRotation());
     });
   }
 

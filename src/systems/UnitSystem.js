@@ -45,27 +45,32 @@ export class UnitSystem {
         let lastClickTime = 0;
         unit.sprite.on('pointerdown', (pointer) => {
             if (pointer.rightButtonDown()) return;
+
             const currentTime = pointer.time;
             const timeSinceLastClick = currentTime - lastClickTime;
-            
+
+            /*
+            ============================================
+            ================== DOUBLE CLICK ============
+            */
             // Check if this is a double-click (typically 300-500ms threshold)
             if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
-                console.log('Double click detected');
-                // Handle double-click logic here
+                this.handleUnitDoubleClick(pointer, unit);
                 return;
             }
             lastClickTime = currentTime;
-            console.log('single clicked');
-            // DTB: I'm not certain we still want to clear the selection here
-            const selectedUnitGroup = this.selectedUnitGroup;
-            const clickedUnitGroup = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
             /*
-            If we have another unit selected AND that unit can reposition,
-            then when we click this unit, it should do nothing.
-            the other unit should remain selected until we either place this unit or deselect it.
-            If the other unit cannot reposition, then we should clear the selection and select this unit.
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^ END DOUBLE CLICK ^^^^^^^^^^^
+           */
+            /*
+             ############################################
+             ================== SINGLE  CLICK ============
+             ############################################
+             */
+            this.handleUnitSingleClick(pointer, unit);
+            /*
 
-            If we have no unit selected, then we should select this unit, and find out if it can reposition.
 
             if it can, then we start the repositioning process.
 
@@ -74,40 +79,41 @@ export class UnitSystem {
             that way players know at a glance which units can be moved.
 
             */
-           // DTB: This is the check for another unit already being repositioned, in which case we can't click this unit.
-           // It seems phaser prioritizes the unit which is not being repositioned first,
-           // so when we have a unit which is repositioning, and we click the next unit on the ground, 
-           // the unit on the ground handles its click event first.
-            if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning &&
-                this.selectedUnitGroup !== this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY)) {
-                // do nothing
-                return;
-            }
-            this.clearUnitSelection();
 
-            // Get the unit group using unit's groupId
-            const group = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
 
-            if (group) {
-                if (group.canReposition) {
-                    this.selectedUnitGroup = group;
-                    group.setRepositioning();
-                    // Set initial alpha for selected units
-                    this.selectedUnitGroup.units.forEach(unit => {
-                        unit.setAlpha(0.5);
-                    });
-                }
-                else {
-                    this.scene.gridSystem.showInvalidPlacementFeedback(group.units);
-                }
-            }
+          
         });
 
         // Track last click time for double-click detection
         unit.sprite.on('pointerdown', (pointer) => {
-            
+
         });
         return unit;
+    }
+
+    handleUnitDoubleClick(pointer, unit) {
+        //handle repositioning
+        if (this.selectedUnitGroup && this.selectedUnitGroup.canReposition) {
+            this.selectedUnitGroup.setRepositioning();
+            // Set initial alpha for selected units
+            this.selectedUnitGroup.units.forEach(unit => {
+                unit.setAlpha(0.5);
+            });
+        }
+    }
+
+    handleUnitSingleClick(pointer, unit) {
+        // Just handle selection
+        const clickedUnitGroup = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
+        
+        // If another unit is being repositioned, don't change selection
+        if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning &&
+            this.selectedUnitGroup !== clickedUnitGroup) {
+            return;
+        }
+        
+        // Set the selected unit group
+        this.selectedUnitGroup = clickedUnitGroup;
     }
 
     // Helper to assign an ID to a unit
@@ -156,12 +162,20 @@ export class UnitSystem {
             unit.setPosition(snappedX + (unit.isVertical ? 0 : i * GRID.CELL_SIZE),
                 snappedY + (unit.isVertical ? i * GRID.CELL_SIZE : 0))
             unit.setAlpha(1);
+            unit.isRepositioning = false;
         })
         // this.clearUnitSelection();
         return units;
     }
 
     clearUnitSelection() {
+        if (this.selectedUnitGroup) {
+            // Reset alpha and repositioning flags for units in the group
+            this.selectedUnitGroup.units.forEach(unit => {
+                unit.setAlpha(1);
+                unit.isRepositioning = false;
+            });
+        }
         this.selectedUnitGroup = null;
     }
 

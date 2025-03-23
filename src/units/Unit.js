@@ -64,6 +64,8 @@ export class Unit {
     }
 
     toggleRotation() {
-        this.isVertical = !this.isVertical;
+        if (this.isRepositioning) {
+            this.isVertical = !this.isVertical;
+        } 
     }
 } 
