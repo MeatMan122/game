@@ -32,23 +32,12 @@ export class Unit {
         this.sprite.on('pointerdown', (pointer) => {
             // Ignore right clicks
             if (pointer.rightButtonDown()) return;
-            
-            console.group('Unit Click Handler');
-            console.log('Unit clicked:', { 
-                unitType: this.unitType, 
-                id: this.id,
-                clickCount: pointer.event.detail,
-                isRepositioning: this.isRepositioning
-            });
-            
             // Get the unit system
             const unitSystem = this.scene.unitSystem;
             
             // When in repositioning mode, allow the click to pass through
             // to potentially trigger the global click handler
             if (this.isRepositioning && pointer.event.detail === 1) {
-                console.log('Unit is in repositioning mode - handling placement');
-                
                 // Handle the placement directly here
                 this.handleSingleClick(pointer);
                 
@@ -65,10 +54,8 @@ export class Unit {
             
             // Check if this is a double-click using the browser's native detection
             if (pointer.event.detail > 1) {
-                console.log('Double click detected');
                 this.handleDoubleClick(pointer);
             } else {
-                console.log('Single click detected');
                 this.handleSingleClick(pointer);
             }
             
@@ -84,7 +71,6 @@ export class Unit {
         
         // If this unit's group is being repositioned, handle placement
         if (group && group.isRepositioning) {
-            console.log('Unit is being repositioned - handling placement');
             
             // Get grid position for placement
             const { snappedX, snappedY, gridX, gridY } = this.scene.gridSystem.getGridPositionFromPointer(
@@ -112,9 +98,6 @@ export class Unit {
             console.log('Another unit is being repositioned - ignoring click');
             return;
         }
-        
-        // Select this unit's group
-        console.log('Selecting unit group');
         unitSystem.selectUnitGroup(group);
     }
     
@@ -123,10 +106,7 @@ export class Unit {
         const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
         
         if (group && group.canReposition) {
-            console.log('Initiating repositioning for unit group');
             unitSystem.startRepositioningGroup(group);
-        } else {
-            console.log('Unit group cannot be repositioned');
         }
     }
 

@@ -24,12 +24,9 @@ export class UnitGroup {
         this.units.forEach(unit => {
             unit.setSelected(selected);
         });
-        
-        console.log(`Unit group ${selected ? 'selected' : 'deselected'}: ${this.unitType}`);
     }
 
     setRepositioning(repositioning = true) {
-        console.log(`Setting repositioning to ${repositioning} for unit group: ${this.unitType}`);
         this.isRepositioning = repositioning;
         this.units.forEach(unit => {
             unit.setRepositioning(repositioning);
@@ -75,16 +72,17 @@ export class UnitGroup {
     placeAtPosition(gridX, gridY, snappedX, snappedY, unitSystem, gridSystem) {
         // Verify placement is valid
         if (!this.isValidPlacement(gridX, gridY, gridSystem)) {
-            console.log('Invalid placement position');
             gridSystem.showInvalidPlacementFeedback(this.units);
             return false;
         }
+        
+        // Make sure first unit has the correct orientation before positioning
+        this.units[0].isVertical = this.isVertical;
         
         // Position the units
         const placedUnits = unitSystem.positionUnit(this.units[0], snappedX, snappedY);
         
         if (!placedUnits) {
-            console.log('Unit placement failed');
             return false;
         }
         
@@ -99,14 +97,18 @@ export class UnitGroup {
             unitSystem.clearUnitSelection();
         }
         
-        console.log('Unit group placed successfully');
         return true;
     }
     
     toggleRotation() {
         if (!this.isRepositioning) return;
         
+        // Toggle the orientation state
         this.isVertical = !this.isVertical;
-        console.log(`Unit group rotation changed: isVertical=${this.isVertical}`);
+        
+        // Update all units in the group to match this orientation
+        this.units.forEach(unit => {
+            unit.isVertical = this.isVertical;
+        });
     }
 } 

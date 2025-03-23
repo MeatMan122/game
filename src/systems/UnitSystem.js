@@ -39,7 +39,12 @@ export class UnitSystem {
         // Add T key handler for unit rotation
         this.scene.input.keyboard.on('keydown-T', () => {
             if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
+                // Toggle the rotation
                 this.selectedUnitGroup.toggleRotation();
+                
+                // Force an immediate update of unit positions based on current pointer
+                const pointer = this.scene.input.activePointer;
+                this.selectedUnitGroup.followPointer(pointer, this.scene.gridSystem);
             }
         });
     }
@@ -52,20 +57,14 @@ export class UnitSystem {
     }
     
     handleGlobalClick(pointer) {
-        console.group('UnitSystem - Global Click Handler');
-        console.log('Global click at:', { x: pointer.x, y: pointer.y, detail: pointer.event.detail });
-        
         // Ignore double-clicks - those should be handled by the Unit component
         if (pointer.event && pointer.event.detail > 1) {
-            console.log('Ignoring global double-click');
-            console.groupEnd();
             return;
         }
         
         // If we have a selected unit group that's repositioning, attempt to place it
         if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
             const { snappedX, snappedY, gridX, gridY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
-            console.log('Attempting to place unit at grid position:', { gridX, gridY });
             
             // Try to place the unit group
             const success = this.selectedUnitGroup.placeAtPosition(
@@ -112,11 +111,9 @@ export class UnitSystem {
     
     // Select a unit group
     selectUnitGroup(group) {
-        console.log('Selecting unit group:', group ? group.unitType : 'none');
         
         // If we already have a selected group that's repositioning, ignore
         if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
-            console.log('Ignoring selection, another group is being repositioned');
             return;
         }
         
@@ -137,7 +134,6 @@ export class UnitSystem {
     // Start repositioning a unit group
     startRepositioningGroup(group) {
         if (!group || !group.canReposition) {
-            console.log('Group cannot be repositioned');
             return;
         }
         
@@ -146,8 +142,6 @@ export class UnitSystem {
         
         // Set repositioning state
         group.setRepositioning(true);
-        
-        console.log('Started repositioning unit group:', group.unitType);
     }
 
     // Helper to assign an ID to a unit
@@ -185,20 +179,31 @@ export class UnitSystem {
     positionUnit(unit, snappedX, snappedY) {
         const unitsPerPlacement = this.getUnitsPerPlacement(unit.unitType);
         const { gridX, gridY } = this.scene.gridSystem.worldToGrid(snappedX, snappedY);
+        
+        // Store the unit orientation before checking position
+        const isVertical = unit.isVertical;
+        
         // Check if positions are available based on rotation
-        if (!this.scene.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitsPerPlacement, unit.isVertical)) {
+        if (!this.scene.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitsPerPlacement, isVertical)) {
             return null;
         }
+        
         //get all units in group
         const unitIds = this.unitGroups.get(unit.groupId);
         const units = unitIds.map(unitId => this.unitsById.get(unitId));
+        
         // set position of all units (which should be deployment zone on create)
         units.forEach((unit, i) => {
-            unit.setPosition(snappedX + (unit.isVertical ? 0 : i * GRID.CELL_SIZE),
-                snappedY + (unit.isVertical ? i * GRID.CELL_SIZE : 0))
+            unit.setPosition(
+                snappedX + (isVertical ? 0 : i * GRID.CELL_SIZE),
+                snappedY + (isVertical ? i * GRID.CELL_SIZE : 0)
+            );
             unit.setAlpha(1);
             unit.isRepositioning = false;
-        })
+            // Ensure unit keeps its orientation
+            unit.isVertical = isVertical;
+        });
+        
         return units;
     }
 
@@ -209,7 +214,6 @@ export class UnitSystem {
             this.selectedUnitGroup.setSelected(false);
         }
         this.selectedUnitGroup = null;
-        console.log('Cleared unit selection');
     }
 
     isPositionOccupied(gridX, gridY) {
