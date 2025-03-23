@@ -1,5 +1,5 @@
 ---
-description: 
+description: Ensure .js code is readable, maintainable, and performant
 globs: 
 alwaysApply: false
 ---

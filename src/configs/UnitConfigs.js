@@ -7,12 +7,12 @@ export const UNIT_TYPES = {
 
 export const UNIT_CONFIGS = {
     [UNIT_TYPES.ARCHER]: {
-        cost: Math.floor(RESOURCES.STARTING_GOLD / 10),
+        cost: 50,
         color: 0x00ff00,
         unitsPerPlacement: 2
     },
     [UNIT_TYPES.WARRIOR]: {
-        cost: Math.floor(RESOURCES.STARTING_GOLD / 10),
+        cost: 50,
         color: 0xff0000,
         unitsPerPlacement: 4
     }
