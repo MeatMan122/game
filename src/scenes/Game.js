@@ -202,7 +202,6 @@ export class Game extends Scene {
             snappedX + (isVertical ? 0 : index * GRID.CELL_SIZE),
             snappedY + (isVertical ? index * GRID.CELL_SIZE : 0)
           );
-
           // Set visual feedback based on placement validity
           unit.setAlpha(canPlace ? 0.5 : 0.3);
         });
@@ -215,35 +214,50 @@ export class Game extends Scene {
       
       // Only process left clicks on the game area (not UI)
       if (pointer.leftButtonDown()) {
+        console.group('Game Scene - Left Click Handler', pointer.event.detail);
+        console.log('Pointer position:', { x: pointer.x, y: pointer.y });
+        
         const selectedGroup = this.unitSystem.selectedUnitGroup;
+        console.log('Selected Unit Group:', selectedGroup ? 
+          { unitType: selectedGroup.unitType, isRepositioning: selectedGroup.isRepositioning } : 'None');
         
         // If we have a selected unit group that's repositioning, attempt to place it
         if (selectedGroup && selectedGroup.isRepositioning) {
+          console.log('Attempting to reposition unit group');
           const { snappedX, snappedY, gridX, gridY } = this.gridSystem.getGridPositionFromPointer(pointer, this.cameras.main);
+          console.log('Grid target position:', { gridX, gridY, snappedX, snappedY });
           const isVertical = selectedGroup.isVertical;
           const unitCount = selectedGroup.units.length;
           
           // Check if placement is valid
-          if (this.gridSystem.getTerritoryAt(gridY) === 'player' && 
-              this.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitCount, isVertical)) {
-            
+          const inPlayerTerritory = this.gridSystem.getTerritoryAt(gridY) === 'player';
+          const validPosition = this.gridSystem.isValidUnoccupiedPosition(gridX, gridY, unitCount, isVertical);
+          console.log('Placement validity:', { inPlayerTerritory, validPosition });
+          
+          if (inPlayerTerritory && validPosition) {
+            console.log('Placement valid - positioning unit group');
             // Place the first unit (which will place the entire group)
             this.unitSystem.positionUnit(selectedGroup.units[0], snappedX, snappedY);
             
             // Clear selection after successful placement
             this.unitSystem.clearUnitSelection();
           } else {
+            console.log('Placement invalid - showing feedback');
             // Show invalid placement feedback
             this.gridSystem.showInvalidPlacementFeedback(selectedGroup.units);
           }
+        } else {
+          console.log('No repositioning happening or no unit group selected');
         }
+        console.groupEnd();
       }
     });
 
     // Right-click handler
     this.input.on('pointerdown', (pointer) => {
       if (pointer.rightButtonDown()) {
-        this.unitSystem.clearUnitSelection();
+        // I like this, but it's sort of a loophole which always works and could have unexpected consequences
+        // this.unitSystem.clearUnitSelection();
       }
     });
 

@@ -46,6 +46,7 @@ export class UnitSystem {
         unit.sprite.on('pointerdown', (pointer) => {
             if (pointer.rightButtonDown()) return;
 
+            console.group('UnitSystem - Unit Click Handler');
             const currentTime = pointer.time;
             const timeSinceLastClick = currentTime - lastClickTime;
 
@@ -56,8 +57,10 @@ export class UnitSystem {
             // Check if this is a double-click (typically 300-500ms threshold)
             if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
                 this.handleUnitDoubleClick(pointer, unit);
+                console.groupEnd();
                 return;
             }
+            // Track last click time for double-click detection
             lastClickTime = currentTime;
             /*
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -69,6 +72,7 @@ export class UnitSystem {
              ############################################
              */
             this.handleUnitSingleClick(pointer, unit);
+            console.groupEnd();
             /*
 
 
@@ -79,41 +83,62 @@ export class UnitSystem {
             that way players know at a glance which units can be moved.
 
             */
-
-
-          
         });
 
-        // Track last click time for double-click detection
-        unit.sprite.on('pointerdown', (pointer) => {
 
-        });
         return unit;
     }
 
     handleUnitDoubleClick(pointer, unit) {
+        console.group('UnitSystem - Double Click Handler', pointer.event.detail);
+        console.log('Unit double-clicked:', { 
+            unitType: unit.unitType, 
+            id: unit.id, 
+            position: { gridX: unit.gridX, gridY: unit.gridY } 
+        });
+        
         //handle repositioning
         if (this.selectedUnitGroup && this.selectedUnitGroup.canReposition) {
+            console.log('Unit group can be repositioned - setting repositioning state');
             this.selectedUnitGroup.setRepositioning();
             // Set initial alpha for selected units
             this.selectedUnitGroup.units.forEach(unit => {
                 unit.setAlpha(0.5);
             });
+        } else {
+            console.log('Unit group cannot be repositioned or no group selected');
         }
+        console.groupEnd();
     }
 
     handleUnitSingleClick(pointer, unit) {
+        console.group('UnitSystem - Single Click Handler', pointer.event.detail);
+        console.log('Unit single-clicked:', { 
+            unitType: unit.unitType, 
+            id: unit.id, 
+            position: { gridX: unit.gridX, gridY: unit.gridY } 
+        });
+        
         // Just handle selection
         const clickedUnitGroup = this.getUnitGroup(unit.getGridPosition().gridX, unit.getGridPosition().gridY);
-        
+        console.log('Retrieved unit group:', clickedUnitGroup ? {
+            unitType: clickedUnitGroup.unitType,
+            canReposition: clickedUnitGroup.canReposition,
+            unitCount: clickedUnitGroup.units.length
+        } : 'No group found');
+
         // If another unit is being repositioned, don't change selection
         if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning &&
             this.selectedUnitGroup !== clickedUnitGroup) {
+            console.log('Another unit group is being repositioned - ignoring click');
+            console.groupEnd();
             return;
         }
-        
+
         // Set the selected unit group
+        console.log('Setting selected unit group');
         this.selectedUnitGroup = clickedUnitGroup;
+        console.groupEnd();
     }
 
     // Helper to assign an ID to a unit

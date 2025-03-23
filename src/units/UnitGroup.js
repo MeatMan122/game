@@ -21,4 +21,11 @@ export class UnitGroup {
             unit.isRepositioning = true;
         });
     }
+
+    clearRepositioning() {
+        this.isRepositioning = false;
+        this.units.forEach(unit => {
+            unit.isRepositioning = false;
+        });
+    }
 } 
