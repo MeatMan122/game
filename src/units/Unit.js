@@ -1,3 +1,5 @@
+import { GRID } from '../configs/Constants';
+
 export class Unit {
     constructor(scene, unitType) {
         this.scene = scene;
@@ -17,14 +19,28 @@ export class Unit {
     }
 
     createSprite() {
+        // Create a highlight background (will be visible only when unit can be repositioned)
+        // scene.add.rectangle(x, y, width, height, fillColor, fillAlpha)
+        this.highlightSprite = this.scene.add.rectangle(0, 0, GRID.CELL_SIZE, GRID.CELL_SIZE, 0xfce303, 0.4);
+        this.highlightSprite.setVisible(false); // Hidden by default
+        this.scene.gameContainer.add(this.highlightSprite);
+        
+        // Set highlight to a lower depth so it appears behind the unit sprite
+        this.highlightSprite.setDepth(-1);
+        
+        // Create the unit sprite
         this.sprite = this.scene.add.sprite(0, 0, `${this.unitType}-idle`, 0);
         this.sprite.play(`${this.unitType}-idle`);
         this.sprite.setInteractive();
         this.sprite.unit = this; // Reference back to this Unit instance
         this.scene.gameContainer.add(this.sprite);
+        this.sprite.setDepth(0); // Ensure unit is above the highlight
         
         // Set up event handlers
         this.setupEventHandlers();
+        
+        // Update highlight visibility based on whether unit can be repositioned
+        this.updateHighlight();
     }
 
     setupEventHandlers() {
@@ -113,6 +129,10 @@ export class Unit {
     setPosition(x, y) {
         if (this.sprite) {
             this.sprite.setPosition(x, y);
+            // Move the highlight sprite with the unit
+            if (this.highlightSprite) {
+                this.highlightSprite.setPosition(x, y);
+            }
             const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
             this.gridX = gridX;
             this.gridY = gridY;
@@ -136,6 +156,10 @@ export class Unit {
     }
 
     destroy() {
+        if (this.highlightSprite) {
+            this.highlightSprite.destroy();
+            this.highlightSprite = null;
+        }
         if (this.sprite) {
             this.sprite.destroy();
             this.sprite = null;
@@ -164,5 +188,17 @@ export class Unit {
         if (this.isRepositioning) {
             this.isVertical = !this.isVertical;
         } 
+    }
+
+    // Update the highlight visibility based on whether the unit can be repositioned
+    updateHighlight() {
+        // A unit can be repositioned if it was created in the current round
+        const canReposition = this.roundCreated === this.scene.currentRound;
+        this.highlightSprite.setVisible(canReposition);
+        
+        // Force the highlight to match the unit's position exactly
+        if (canReposition && this.sprite) {
+            this.highlightSprite.setPosition(this.sprite.x, this.sprite.y);
+        }
     }
 } 

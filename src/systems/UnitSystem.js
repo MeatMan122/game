@@ -194,14 +194,21 @@ export class UnitSystem {
         
         // set position of all units (which should be deployment zone on create)
         units.forEach((unit, i) => {
-            unit.setPosition(
-                snappedX + (isVertical ? 0 : i * GRID.CELL_SIZE),
-                snappedY + (isVertical ? i * GRID.CELL_SIZE : 0)
-            );
+            const xPos = snappedX + (isVertical ? 0 : i * GRID.CELL_SIZE);
+            const yPos = snappedY + (isVertical ? i * GRID.CELL_SIZE : 0);
+            
+            unit.setPosition(xPos, yPos);
             unit.setAlpha(1);
             unit.isRepositioning = false;
             // Ensure unit keeps its orientation
             unit.isVertical = isVertical;
+        });
+        
+        // Force highlights to update
+        units.forEach(unit => {
+            if (typeof unit.updateHighlight === 'function') {
+                unit.updateHighlight();
+            }
         });
         
         return units;

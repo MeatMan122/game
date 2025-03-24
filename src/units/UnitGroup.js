@@ -111,4 +111,9 @@ export class UnitGroup {
             unit.isVertical = this.isVertical;
         });
     }
+
+    // Update highlights for all units in the group
+    updateHighlights() {
+        this.units.forEach(unit => unit.updateHighlight());
+    }
 } 

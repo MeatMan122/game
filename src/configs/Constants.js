@@ -105,4 +105,18 @@ export const GAME = {
     DEBUG: {
         LOG_DEBOUNCE: 2000
     }
+};
+
+// Depth constants for rendering layers
+// Each layer is spaced by 5 to allow for intermediate layers if needed
+export const DEPTH = {
+    BACKGROUND: 0,
+    HIGHLIGHTS: 5,
+    GROUND_UNITS: 10,
+    FLYING_UNITS: 15,
+    EFFECTS: 20,
+    UI_BACKGROUND: 95,
+    UI_ELEMENTS: 100,
+    UI_FOREGROUND: 105,
+    TOOLTIP: 110
 }; 
