@@ -16,6 +16,7 @@ export class UnitGroup {
         this.isVertical = isVertical;
         this.isRepositioning = isRepositioning;
         this.isSelected = false;
+        this.owner = units[0].owner; // Get owner from first unit in group
     }
 
     setSelected(selected) {

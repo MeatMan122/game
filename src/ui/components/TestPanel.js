@@ -70,9 +70,10 @@ export class TestPanel {
         });
 
         // Add more test buttons as needed
-        this.addButton('Toggle Grid', () => {
+        this.addButton('Switch Player', () => {
             // Example functionality
-            console.log('Grid toggled');
+            this.scene.switchPlayer();
+            console.log('Player switched');
         });
 
         this.addButton('Next Round', () => {

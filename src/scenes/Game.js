@@ -12,6 +12,7 @@ export class Game extends Scene {
   constructor() {
     super("Game");
     this.isTestingMode = false; // Default value
+    this.currentPlayer = 'playerOne'; // Track current player
     // Properties initialized with values
     this.previewUnit = null;
     this.gridGraphics = null;
@@ -233,6 +234,10 @@ export class Game extends Scene {
   initializeNextRound(){
     this.currentRound++;
     this.unitSystem.updateAllUnitHighlights();
+  }
+
+  switchPlayer(){
+    this.currentPlayer = this.currentPlayer === 'playerOne' ? 'playerTwo' : 'playerOne';
   }
 
 

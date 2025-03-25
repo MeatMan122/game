@@ -14,6 +14,7 @@ export class Unit {
         this.isRepositioning = false;
         this.isSelected = false;
         this.isInvalidPosition = false; // New flag for invalid position state
+        this.owner = scene.currentPlayer; // Track which player owns this unit
         
         // Create the sprite
         this.createSprite();
