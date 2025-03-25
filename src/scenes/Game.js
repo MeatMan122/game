@@ -61,6 +61,8 @@ export class Game extends Scene {
     // Create test panel if in testing mode
     if (this.isTestingMode) {
       this.testPanel = new TestPanel(this);
+      // Tell main camera to ignore TestPanel's container
+      this.cameras.main.ignore(this.testPanel.container);
     }
 
     // Disable browser context menu on right click

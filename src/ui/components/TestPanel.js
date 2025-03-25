@@ -4,6 +4,10 @@ export class TestPanel {
     constructor(scene) {
         this.scene = scene;
         this.isExpanded = true;
+        this.container = null;
+        this.background = null;
+        this.toggleButton = null;
+        this.contentContainer = null;
         this.width = 200;
         this.padding = 20;
         this.buttonSpacing = 10;
