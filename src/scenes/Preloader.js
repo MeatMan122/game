@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { DEPTH } from '../configs/Constants';
 
 export class Preloader extends Scene
 {
@@ -10,13 +11,14 @@ export class Preloader extends Scene
     init ()
     {
         //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(512, 384, 'background');
+        this.add.image(512, 384, 'background').setDepth(DEPTH.BACKGROUND);
 
         //  A simple progress bar. This is the outline of the bar.
-        this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff);
+        this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff).setDepth(DEPTH.UI_ELEMENTS);
 
         //  This is the progress bar itself. It will increase in size from the left based on the % of progress.
         const bar = this.add.rectangle(512-230, 384, 4, 28, 0xffffff);
+        bar.setDepth(DEPTH.UI_FOREGROUND);
 
         //  Use the 'progress' event emitted by the LoaderPlugin to update the loading bar
         this.load.on('progress', (progress) => {

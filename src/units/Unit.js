@@ -1,4 +1,4 @@
-import { GRID } from '../configs/Constants';
+import { GRID, DEPTH } from '../configs/Constants';
 
 export class Unit {
     constructor(scene, unitType) {
@@ -26,7 +26,7 @@ export class Unit {
         this.scene.gameContainer.add(this.highlightSprite);
         
         // Set highlight to a lower depth so it appears behind the unit sprite
-        this.highlightSprite.setDepth(-1);
+        this.highlightSprite.setDepth(DEPTH.HIGHLIGHTS);
         
         // Create the unit sprite
         this.sprite = this.scene.add.sprite(0, 0, `${this.unitType}-idle`, 0);
@@ -34,7 +34,7 @@ export class Unit {
         this.sprite.setInteractive();
         this.sprite.unit = this; // Reference back to this Unit instance
         this.scene.gameContainer.add(this.sprite);
-        this.sprite.setDepth(0); // Ensure unit is above the highlight
+        this.sprite.setDepth(DEPTH.GROUND_UNITS); // Ensure unit is above the highlight
         
         // Set up event handlers
         this.setupEventHandlers();

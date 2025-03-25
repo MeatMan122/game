@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { DEPTH } from "../configs/Constants";
 
 export class MainMenu extends Scene {
   constructor() {
@@ -6,7 +7,7 @@ export class MainMenu extends Scene {
   }
 
   create() {
-    this.add.image(512, 384, "background");
+    this.add.image(512, 384, "background").setDepth(DEPTH.BACKGROUND);
 
     this.add
       .text(512, 460, "Main Menu", {
@@ -17,7 +18,8 @@ export class MainMenu extends Scene {
         strokeThickness: 8,
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     // Multiplayer Button
     const multiplayerButton = this.add
@@ -30,7 +32,8 @@ export class MainMenu extends Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     // Settings Button
     const settingsButton = this.add
@@ -43,7 +46,8 @@ export class MainMenu extends Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     // Multiplayer Button Click
     // Multiplayer Button Click - Start Game scene

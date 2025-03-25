@@ -1,4 +1,4 @@
-import { RESOURCES } from '../configs/Constants';
+import { RESOURCES, DEPTH } from '../configs/Constants';
 import { UNIT_CONFIGS } from '../configs/UnitConfigs';
 
 export class ResourceSystem {
@@ -54,7 +54,7 @@ export class ResourceSystem {
             RESOURCES.FEEDBACK.COLOR,
             RESOURCES.FEEDBACK.ALPHA
         );
-        feedback.setDepth(102);
+        feedback.setDepth(DEPTH.UI_FOREGROUND);
 
         // Add a shake effect to the gold text
         this.scene.tweens.add({

@@ -1,3 +1,5 @@
+import { DEPTH } from '../../configs/Constants';
+
 export class UnitButton {
     constructor(scene, config) {
         this.button = null;
@@ -48,7 +50,7 @@ export class UnitButton {
     }
 
     setDepth(depth) {
-        this.container.setDepth(depth);
+        this.container.setDepth(depth || DEPTH.UI_ELEMENTS);
     }
 
     setVisible(visible) {

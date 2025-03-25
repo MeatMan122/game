@@ -9,5 +9,5 @@
             "*": ["*"]
         }
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "node_modules/phaser/types/phaser.d.ts"]
 }

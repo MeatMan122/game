@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { DEPTH } from "../configs/Constants";
 
 // Note on Global Settings:
 // Phaser doesn't have a built-in global state system. We initialize a settings object
@@ -13,7 +14,7 @@ export class Settings extends Scene {
 
   create() {
     // Background
-    this.add.image(512, 384, "background");
+    this.add.image(512, 384, "background").setDepth(DEPTH.BACKGROUND);
 
     // Title
     this.add
@@ -25,7 +26,8 @@ export class Settings extends Scene {
         strokeThickness: 8,
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     // Music Volume Label
     this.add
@@ -37,13 +39,15 @@ export class Settings extends Scene {
         strokeThickness: 4,
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     // Music Volume Slider
     const musicSlider = this.add
       .rectangle(512, 400, 200, 20, 0x666666)
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     const musicHandle = this.add
       .rectangle(
@@ -54,7 +58,8 @@ export class Settings extends Scene {
         0xffffff
       )
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_FOREGROUND);
 
     musicHandle.setData("dragging", false);
     // Snap handle to click position on slider
@@ -85,13 +90,15 @@ export class Settings extends Scene {
         strokeThickness: 4,
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     // Sound Volume Slider
     const soundSlider = this.add
       .rectangle(512, 500, 200, 20, 0x666666)
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     const soundHandle = this.add
       .rectangle(
@@ -102,7 +109,8 @@ export class Settings extends Scene {
         0xffffff
       )
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_FOREGROUND);
 
     soundHandle.setData("dragging", false);
     // Snap handle to click position on slider
@@ -134,7 +142,8 @@ export class Settings extends Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(DEPTH.UI_ELEMENTS);
 
     backButton.on("pointerdown", () => {
       this.scene.start("MainMenu");

@@ -1,5 +1,5 @@
 import { UNIT_CONFIGS } from '../configs/UnitConfigs';
-import { GRID, TERRITORY, TERRITORY_COLORS, GRID_STYLE, ANIMATION } from '../configs/Constants';
+import { GRID, TERRITORY, TERRITORY_COLORS, GRID_STYLE, DEPTH, ANIMATION } from '../configs/Constants';
 
 export class GridSystem {
     constructor(scene) {
@@ -8,10 +8,11 @@ export class GridSystem {
         this.deploymentZoneCenterX = null;
         this.deploymentZoneCenterY = null;
     }
-
+    
     create(gameContainer) {
         this.gridGraphics = this.scene.add.graphics();
         gameContainer.add(this.gridGraphics);
+        this.gridGraphics.setDepth(DEPTH.BACKGROUND);
         
         this.drawTerritories();
         this.drawGridLines();
@@ -183,6 +184,10 @@ export class GridSystem {
                 0.3
             );
             this.scene.gameContainer.add(feedback);
+            // DTB: This is a smell because we now have two kinds of highlights, one for
+            // unit states and one for placement feedback. not a bad idea to have them both
+            // but worth consideration
+            feedback.setDepth(DEPTH.EFFECTS);
             this.scene.tweens.add({
                 targets: feedback,
                 alpha: 0,

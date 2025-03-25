@@ -92,14 +92,10 @@ export const GAME = {
     BACKGROUND_COLOR: '#028af8',
     UI: {
         MENU: {
-            DEPTH: 100,
             BACKGROUND: {
                 COLOR: 0x333333,
                 ALPHA: 0.8
             }
-        },
-        BUTTON: {
-            DEPTH: 101
         }
     },
     DEBUG: {

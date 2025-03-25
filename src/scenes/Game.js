@@ -4,8 +4,9 @@ import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UI, TERRITORY, GAME, CAMERA } from "../configs/Constants";
+import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH } from "../configs/Constants";
 
+/** @type {Phaser.Scene} */
 export class Game extends Scene {
   constructor() {
     super("Game");
@@ -95,7 +96,7 @@ export class Game extends Scene {
   createUnitSelectionMenu() {
     // Create a container for UI elements
     const uiContainer = this.add.container(0, 0);
-    uiContainer.setDepth(GAME.UI.MENU.DEPTH);
+    uiContainer.setDepth(DEPTH.UI_BACKGROUND);
 
     // Add background panel
     const menuBg = this.add.rectangle(
@@ -107,6 +108,7 @@ export class Game extends Scene {
       GAME.UI.MENU.BACKGROUND.ALPHA
     );
     menuBg.setOrigin(0, 0);
+    menuBg.setDepth(DEPTH.UI_BACKGROUND);
 
     // Create gold counter
     const goldText = this.resourceSystem.createGoldCounter(
@@ -141,7 +143,7 @@ export class Game extends Scene {
       name: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
       onClick: () =>this.handleCreateUnitButtonClick(unitType)
     });
-    button.setDepth(GAME.UI.BUTTON.DEPTH);
+    button.setDepth(DEPTH.UI_ELEMENTS);
     this.unitSystem.registerButton(unitType, button);
     return button;
   }
