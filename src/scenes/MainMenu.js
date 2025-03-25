@@ -21,9 +21,9 @@ export class MainMenu extends Scene {
       .setOrigin(0.5)
       .setDepth(DEPTH.UI_ELEMENTS);
 
-    // Multiplayer Button
-    const multiplayerButton = this.add
-      .text(512, 520, "VS AI", {
+    // Testing Button
+    const testBattleButton = this.add
+      .text(512, 520, "Test Battle", {
         fontFamily: "Arial Black",
         fontSize: 24,
         color: "#ffffff",
@@ -49,10 +49,9 @@ export class MainMenu extends Scene {
       .setInteractive()
       .setDepth(DEPTH.UI_ELEMENTS);
 
-    // Multiplayer Button Click
-    // Multiplayer Button Click - Start Game scene
-    multiplayerButton.on("pointerdown", () => {
-      this.scene.start("Game");
+    // Testing Button Click
+    testBattleButton.on("pointerdown", () => {
+      this.scene.start("Game", { isTestingMode: true });
     });
 
     // Settings Button Click

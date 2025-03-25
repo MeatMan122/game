@@ -3,6 +3,7 @@ import { UnitButton } from "../ui/components/UnitButton";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
+import { TestPanel } from "../ui/components/TestPanel";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
 import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH } from "../configs/Constants";
 
@@ -10,7 +11,7 @@ import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH } from "../configs/Constants";
 export class Game extends Scene {
   constructor() {
     super("Game");
-
+    this.isTestingMode = false; // Default value
     // Properties initialized with values
     this.previewUnit = null;
     this.gridGraphics = null;
@@ -21,6 +22,7 @@ export class Game extends Scene {
     this.gridSystem = null;
     this.resourceSystem = null;
     this.unitSystem = null;
+    this.testPanel = null;
 
     // Game elements (initialized in create() and other methods)
     this.gameContainer = null;
@@ -30,6 +32,11 @@ export class Game extends Scene {
     // Unit buttons (initialized in createButtons())
     this.ArcherButton = null;
     this.warriorButton = null;
+  }
+
+  init(data) {
+    // Override default with data from scene.start
+    this.isTestingMode = data.isTestingMode || false;
   }
 
   create() {
@@ -50,6 +57,11 @@ export class Game extends Scene {
 
     // Create UI
     this.createUnitSelectionMenu();
+
+    // Create test panel if in testing mode
+    if (this.isTestingMode) {
+      this.testPanel = new TestPanel(this);
+    }
 
     // Disable browser context menu on right click
     this.disableBrowserContextMenu();
@@ -141,7 +153,7 @@ export class Game extends Scene {
       size: size,
       color: UNIT_CONFIGS[unitType].color,
       name: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
-      onClick: () =>this.handleCreateUnitButtonClick(unitType)
+      onClick: () => this.handleCreateUnitButtonClick(unitType)
     });
     button.setDepth(DEPTH.UI_ELEMENTS);
     this.unitSystem.registerButton(unitType, button);
@@ -193,7 +205,7 @@ export class Game extends Scene {
         this.cameras.main.setZoom(Math.min(CAMERA.MAX_ZOOM, zoom + CAMERA.ZOOM_STEP));
       }
     });
-    
+
     // Right-click handler for clearing selections
     this.input.on('pointerdown', (pointer) => {
       if (pointer.rightButtonDown()) {
