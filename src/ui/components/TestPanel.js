@@ -3,7 +3,7 @@ import { DEPTH } from '../../configs/Constants';
 export class TestPanel {
     constructor(scene) {
         this.scene = scene;
-        this.isExpanded = false;
+        this.isExpanded = true;
         this.width = 200;
         this.padding = 20;
         this.buttonSpacing = 10;
@@ -19,6 +19,7 @@ export class TestPanel {
 
     createPanel() {
         // Create container for all panel elements
+        console.log('createPanel');
         this.container = this.scene.add.container(0, this.yOffset);
         this.container.setDepth(DEPTH.UI_ELEMENTS);
 
