@@ -77,6 +77,7 @@ export class TestPanel {
 
         this.addButton('Next Round', () => {
             this.scene.currentRound++;
+            this.scene.initializeNextRound();
             console.log('Advanced to round:', this.scene.currentRound);
         });
     }

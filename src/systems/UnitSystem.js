@@ -282,4 +282,11 @@ export class UnitSystem {
         this.unitGroups.delete(groupId);
         return true;
     }
+
+    updateAllUnitHighlights() {
+        // Update highlights for all units
+        Array.from(this.unitsById.values()).forEach(unit => {
+            unit.updateHighlight();
+        });
+    }
 } 

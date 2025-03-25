@@ -225,6 +225,17 @@ export class Game extends Scene {
     }, false);
   }
 
+  //This is where we will do all logic for the next round's initialization including:
+  // re-spawning units in same location as player set
+  // updating unit background colors for positioning / enable/disable repositioning
+  // Updating Resources
+  // more?
+  initializeNextRound(){
+    this.currentRound++;
+    this.unitSystem.updateAllUnitHighlights();
+  }
+
+
   update() {
     // Camera movement with WASD keys
     const camera = this.cameras.main;
