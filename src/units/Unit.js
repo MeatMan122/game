@@ -1,4 +1,4 @@
-import { GRID, DEPTH } from '../configs/Constants';
+import { GRID, DEPTH, TERRITORY_COLORS, UNIT } from '../configs/Constants';
 
 export class Unit {
     constructor(scene, unitType) {
@@ -13,6 +13,7 @@ export class Unit {
         this.roundCreated = null;
         this.isRepositioning = false;
         this.isSelected = false;
+        this.isInvalidPosition = false; // New flag for invalid position state
         
         // Create the sprite
         this.createSprite();
@@ -21,7 +22,7 @@ export class Unit {
     createSprite() {
         // Create a highlight background (will be visible only when unit can be repositioned)
         // scene.add.rectangle(x, y, width, height, fillColor, fillAlpha)
-        this.highlightSprite = this.scene.add.rectangle(0, 0, GRID.CELL_SIZE, GRID.CELL_SIZE, 0xfce303, 0.4);
+        this.highlightSprite = this.scene.add.rectangle(0, 0, GRID.CELL_SIZE, GRID.CELL_SIZE, TERRITORY_COLORS.NO_MANS_LAND.color, 0.4);
         this.highlightSprite.setVisible(false); // Hidden by default
         this.scene.gameContainer.add(this.highlightSprite);
         
@@ -153,6 +154,29 @@ export class Unit {
     setRepositioning(repositioning) {
         this.isRepositioning = repositioning;
         this.setAlpha(repositioning ? 0.5 : 1.0);
+        this.updateHighlightColor();
+    }
+
+    // New method to set invalid position state
+    setInvalidPosition(invalid) {
+        this.isInvalidPosition = invalid;
+        this.updateHighlightColor();
+    }
+
+    // New method to update highlight color based on all states
+    updateHighlightColor() {
+        if (!this.highlightSprite) return;
+
+        let color;
+        if (this.isInvalidPosition) {
+            color = UNIT.FEEDBACK.COLOR;
+        } else if (this.isRepositioning) {
+            color = TERRITORY_COLORS.DEPLOYMENT.color;
+        } else {
+            color = TERRITORY_COLORS.NO_MANS_LAND.color;
+        }
+
+        this.highlightSprite.setFillStyle(color, 0.4);
     }
 
     destroy() {
@@ -199,6 +223,7 @@ export class Unit {
         // Force the highlight to match the unit's position exactly
         if (canReposition && this.sprite) {
             this.highlightSprite.setPosition(this.sprite.x, this.sprite.y);
+            this.updateHighlightColor();
         }
     }
 } 

@@ -30,6 +30,10 @@ export class UnitGroup {
         this.isRepositioning = repositioning;
         this.units.forEach(unit => {
             unit.setRepositioning(repositioning);
+            // Clear invalid position state when repositioning is turned off
+            if (!repositioning) {
+                unit.setInvalidPosition(false);
+            }
         });
     }
 
@@ -58,6 +62,8 @@ export class UnitGroup {
             
             // Set visual feedback based on placement validity
             unit.setAlpha(isValid ? 0.5 : 0.3);
+            // Set invalid position state for red highlight
+            unit.setInvalidPosition(!isValid);
         });
         
         return { isValid, gridX, gridY, snappedX, snappedY };
