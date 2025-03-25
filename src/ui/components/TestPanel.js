@@ -19,7 +19,6 @@ export class TestPanel {
 
     createPanel() {
         // Create container for all panel elements
-        console.log('createPanel');
         this.container = this.scene.add.container(0, this.yOffset);
         this.container.setDepth(DEPTH.UI_ELEMENTS);
 
