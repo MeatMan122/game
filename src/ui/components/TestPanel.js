@@ -68,7 +68,7 @@ export class TestPanel {
         this.addButton('Switch Player', () => {
             // Example functionality
             this.scene.switchPlayer();
-            console.log('Player switched');
+            console.log('Player switched to: ', this.scene.currentPlayer);
         });
 
         this.addButton('Next Round', () => {

@@ -58,33 +58,25 @@ export class GridSystem {
 
     // Check if a range of grid positions is available
     isValidUnoccupiedPosition(gridX, gridY, length, isVertical = false) {
-        console.log(`Checking position validity at (${gridX}, ${gridY}) for length ${length}`);
-        
         for (let i = 0; i < length; i++) {
             const currentX = gridX + (isVertical ? 0 : i);
             const currentY = gridY + (isVertical ? i : 0);
 
-            console.log(`  Checking cell (${currentX}, ${currentY})`);
             
             // Check grid bounds
             const isInBounds = this.isValidGridPosition(currentX, currentY);
-            console.log(`    In bounds: ${isInBounds}`);
             
             // Check occupation
             const isOccupied = this.scene.unitSystem.isPositionOccupied(currentX, currentY);
-            console.log(`    Is occupied: ${isOccupied}`);
             
             // Check territory
             const territory = this.getTerritoryAt(currentY);
             const isPlayerTerritory = territory === this.scene.currentPlayer;
-            console.log(`    Territory: ${territory}, Current player: ${this.scene.currentPlayer}, Is valid territory: ${isPlayerTerritory}`);
 
             if (!isInBounds || isOccupied || !isPlayerTerritory) {
-                console.log(`  Position invalid due to: ${!isInBounds ? 'out of bounds' : isOccupied ? 'occupied' : 'wrong territory'}`);
                 return false;
             }
         }
-        console.log(`Position valid for all ${length} cells`);
         return true;
     }
 
@@ -174,7 +166,6 @@ export class GridSystem {
         this.playerDeploymentCenterY = playerDeploymentY + (deploymentZoneWidth / 2);
         this.playerTwoDeploymentCenterX = deploymentZoneX + (deploymentZoneWidth / 2);
         this.playerTwoDeploymentCenterY = playerTwoDeploymentY + (deploymentZoneWidth / 2);
-        console.log(this.playerDeploymentCenterX, this.playerDeploymentCenterY, this.playerTwoDeploymentCenterX, this.playerTwoDeploymentCenterY);
     }
 
     getDeploymentZoneCenter(player) {
@@ -229,20 +220,16 @@ export class GridSystem {
     }
 
     getCoordinatesForUnitDeployment(unitType) {
-        console.log(`\nGetting deployment coordinates for ${unitType}`);
         const currentPlayer = this.scene.currentPlayer || 'playerOne';
-        console.log(`Current player: ${currentPlayer}`);
         
         // Use the pre-calculated deployment centers that were stored during grid creation
         const deploymentCenter = this.getDeploymentZoneCenter(currentPlayer);
         if (!deploymentCenter) {
-            console.log('ERROR: Could not get deployment center coordinates');
             return null;
         }
         
         const centerX = deploymentCenter.x;
         const centerY = deploymentCenter.y;
-        console.log(`Deployment center coordinates: (${centerX}, ${centerY})`);
 
         const unitSize = UNIT_CONFIGS[unitType].unitsPerPlacement || 1;
         const deploymentZoneWidth = TERRITORY.DEPLOYMENT_ZONE.SIZE * GRID.CELL_SIZE;
@@ -250,7 +237,6 @@ export class GridSystem {
 
         // Convert center to grid coordinates
         const centerGrid = this.worldToGrid(centerX, centerY);
-        console.log(`Center grid coordinates: (${centerGrid.gridX}, ${centerGrid.gridY})`);
 
         // Define deployment zone boundaries using the stored center as reference
         const minGridX = this.worldToGrid(deploymentZoneX, 0).gridX;
@@ -261,19 +247,12 @@ export class GridSystem {
         const minGridY = centerGrid.gridY - halfDeploymentSize;
         const maxGridY = centerGrid.gridY + halfDeploymentSize - (unitSize - 1);
 
-        console.log(`Deployment zone boundaries in grid coordinates:`);
-        console.log(`  X: ${minGridX} to ${maxGridX}`);
-        console.log(`  Y: ${minGridY} to ${maxGridY}`);
-
         // Check center first
-        console.log('\nChecking center position first:');
         if (this.isValidUnoccupiedPosition(centerGrid.gridX, centerGrid.gridY, unitSize)) {
-            console.log('Center position is valid, using it');
             return this.snapToGrid(centerX, centerY);
         }
 
         // Search pattern: spiral outward from center
-        console.log('\nSearching in spiral pattern:');
         const directions = [
             { dx: 0, dy: -1 },  // up
             { dx: 0, dy: 1 },   // down
@@ -282,18 +261,15 @@ export class GridSystem {
         ];
 
         for (let distance = 1; distance <= Math.max(TERRITORY.DEPLOYMENT_ZONE.SIZE / 2, unitSize); distance++) {
-            console.log(`\nChecking at distance ${distance}:`);
             for (const dir of directions) {
                 const testGridX = centerGrid.gridX + (dir.dx * distance);
                 const testGridY = centerGrid.gridY + (dir.dy * distance);
                 
-                console.log(`  Testing position (${testGridX}, ${testGridY})`);
 
                 // Check if position is within deployment zone bounds
                 const isWithinBounds = testGridX >= minGridX && testGridX <= maxGridX &&
                                      testGridY >= minGridY && testGridY <= maxGridY;
                                      
-                console.log(`  Within bounds: ${isWithinBounds}`);
 
                 if (isWithinBounds) {
                     if (this.isValidUnoccupiedPosition(testGridX, testGridY, unitSize)) {
@@ -301,14 +277,12 @@ export class GridSystem {
                             GRID.PADDING.LEFT + (testGridX * GRID.CELL_SIZE) + (GRID.CELL_SIZE / 2),
                             GRID.PADDING.TOP + (testGridY * GRID.CELL_SIZE) + (GRID.CELL_SIZE / 2)
                         );
-                        console.log(`Found valid position at (${worldPos.snappedX}, ${worldPos.snappedY})`);
                         return worldPos;
                     }
                 }
             }
         }
 
-        console.log('No valid position found in deployment zone');
         return null;
     }
 } 
