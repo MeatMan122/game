@@ -64,11 +64,6 @@ export class TestPanel {
     }
 
     initializeTestButtons() {
-        // Add your test buttons here
-        this.addButton('Test Button', () => {
-            console.log('Test button clicked');
-        });
-
         // Add more test buttons as needed
         this.addButton('Switch Player', () => {
             // Example functionality

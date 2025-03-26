@@ -238,24 +238,57 @@ export class Game extends Scene {
 
   switchPlayer(){
     this.currentPlayer = this.currentPlayer === 'playerOne' ? 'playerTwo' : 'playerOne';
-  }
 
+    // Get deployment zone center from GridSystem
+    const { x: deploymentZoneX, y: deploymentZoneY } = this.gridSystem.getDeploymentZoneCenter(this.currentPlayer);
+
+    // Get current camera settings
+    const camera = this.cameras.main;
+    const currentZoom = camera.zoom;
+
+    // Calculate camera offset (mirroring setupCameras)
+    const cameraHeight = this.scale.height / currentZoom;
+    const yOffset = cameraHeight * 0.8; // 80% of camera height
+    const uiOffset = UI.PANEL_HEIGHT * 1.65; // UI space offset
+
+    // Adjust scrollY based on player
+    const targetScrollY = this.currentPlayer === 'playerOne'
+        ? deploymentZoneY - yOffset + uiOffset  // PlayerOne: shift up to show UI
+        : deploymentZoneY + yOffset - uiOffset; // PlayerTwo: shift down to center properly
+
+    // Target rotation based on current player
+    const targetRotation = this.currentPlayer === 'playerOne' ? 0 : Math.PI;
+
+    // Animate camera movement and rotation
+    this.tweens.add({
+        targets: camera,
+        scrollX: deploymentZoneX - (this.scale.width / 2 / currentZoom), // Center horizontally
+        scrollY: targetScrollY,
+        rotation: targetRotation,
+        duration: 1000,
+        ease: 'Power2'
+    });
+  }
 
   update() {
     // Camera movement with WASD keys
     const camera = this.cameras.main;
+    
+    // Determine movement direction based on current player perspective
+    const moveX = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
+    const moveY = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
 
     if (this.wasd.left.isDown) {
-      camera.scrollX -= CAMERA.MOVE_SPEED;
+      camera.scrollX -= moveX;
     }
     if (this.wasd.right.isDown) {
-      camera.scrollX += CAMERA.MOVE_SPEED;
+      camera.scrollX += moveX;
     }
     if (this.wasd.up.isDown) {
-      camera.scrollY -= CAMERA.MOVE_SPEED;
+      camera.scrollY -= moveY;
     }
     if (this.wasd.down.isDown) {
-      camera.scrollY += CAMERA.MOVE_SPEED;
+      camera.scrollY += moveY;
     }
   }
 }

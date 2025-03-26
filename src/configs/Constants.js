@@ -62,7 +62,7 @@ export const ANIMATION = {
 };
 
 export const TERRITORY_COLORS = {
-    OPPONENT: { color: 0xff0000, alpha: 0.1 },
+    PLAYER_TWO: { color: 0xff0000, alpha: 0.1 },
     NO_MANS_LAND: { color: 0xffff00, alpha: 0.1 },
     PLAYER: { color: 0x0000ff, alpha: 0.1 },
     DEPLOYMENT: { color: 0x00ff00, alpha: 0.2 }
@@ -116,3 +116,8 @@ export const DEPTH = {
     UI_FOREGROUND: 105,
     TOOLTIP: 110
 }; 
+
+export const PLAYERS = {
+    PLAYER_ONE: 'playerOne',
+    PLAYER_TWO: 'playerTwo'
+};
