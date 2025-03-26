@@ -16,7 +16,7 @@ export class UnitGroup {
         this.isVertical = isVertical;
         this.isRepositioning = isRepositioning;
         this.isSelected = false;
-        this.owner = units[0].owner; // Get owner from first unit in group
+        this.owner = units[0].owner; // Get owner from first unit in group, DTB: Remember this might have to change if we have mind control
     }
 
     setSelected(selected) {
