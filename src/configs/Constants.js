@@ -5,7 +5,7 @@ export const GRID = {
     BASE_PADDING: 120,
     EXTRA_BOTTOM: 130,
     PADDING: {
-        TOP: 120,
+        TOP: 250,// BASE_PADDING + EXTRA_BOTTOM
         RIGHT: 120,
         BOTTOM: 250, // BASE_PADDING + EXTRA_BOTTOM
         LEFT: 120
@@ -54,7 +54,8 @@ export const CAMERA = {
     MOVE_SPEED: 16,
     MIN_ZOOM: 0.5,
     MAX_ZOOM: 2,
-    ZOOM_STEP: 0.1
+    ZOOM_STEP: 0.1,
+    DEFAULT_ZOOM: 0.75
 };
 
 export const ANIMATION = {
@@ -62,7 +63,7 @@ export const ANIMATION = {
 };
 
 export const TERRITORY_COLORS = {
-    OPPONENT: { color: 0xff0000, alpha: 0.1 },
+    PLAYER_TWO: { color: 0xff0000, alpha: 0.1 },
     NO_MANS_LAND: { color: 0xffff00, alpha: 0.1 },
     PLAYER: { color: 0x0000ff, alpha: 0.1 },
     DEPLOYMENT: { color: 0x00ff00, alpha: 0.2 }
@@ -116,3 +117,8 @@ export const DEPTH = {
     UI_FOREGROUND: 105,
     TOOLTIP: 110
 }; 
+
+export const PLAYERS = {
+    PLAYER_ONE: 'playerOne',
+    PLAYER_TWO: 'playerTwo'
+};
