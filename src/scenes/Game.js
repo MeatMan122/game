@@ -238,10 +238,13 @@ export class Game extends Scene {
 
   switchPlayer(){
     this.currentPlayer = this.currentPlayer === 'playerOne' ? 'playerTwo' : 'playerOne';
+    this.changeCameraPerspective();
+  }
 
+  changeCameraPerspective(){
     // Get deployment zone center from GridSystem
     const { x: deploymentZoneX, y: deploymentZoneY } = this.gridSystem.getDeploymentZoneCenter(this.currentPlayer);
-
+    console.log(`${this.currentPlayer} deployment zone center:`, deploymentZoneX, deploymentZoneY);
     // Get current camera settings
     const camera = this.cameras.main;
     const currentZoom = camera.zoom;
