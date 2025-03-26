@@ -53,6 +53,9 @@ export class Game extends Scene {
     const worldSize = this.gridSystem.getWorldSize();
     this.setupCameras(worldSize);
 
+    // Set up keybindings
+    this.setupKeybindings();
+
     // Create grid
     this.gridSystem.create(this.gameContainer);
 
@@ -71,6 +74,18 @@ export class Game extends Scene {
 
     // Set up input handlers
     this.setupInputHandlers();
+    console.log('Camera at start: ', { scrollX: this.cameras.main.scrollX, scrollY: this.cameras.main.scrollY, height: this.scale.height, worldSizeHeight: this.gridSystem.getWorldSize().height });
+
+  }
+
+  setupKeybindings() {
+    // Enable WASD controls
+    this.wasd = {
+      up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+      left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+      right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+    };
   }
 
   setupCameras(worldSize) {
@@ -79,7 +94,7 @@ export class Game extends Scene {
     this.cameras.main.setBounds(0, 0, worldSize.width, worldSize.height);
 
     // Set initial zoom to 0.75 (25% zoomed out from default)
-    this.cameras.main.setZoom(0.75);
+    this.cameras.main.setZoom(CAMERA.DEFAULT_ZOOM);
 
     // Calculate player deployment zone center
     const deploymentZoneX = GRID.PADDING.LEFT + (TERRITORY.DEPLOYMENT_ZONE.PADDING + TERRITORY.DEPLOYMENT_ZONE.SIZE / 2) * GRID.CELL_SIZE;
@@ -99,13 +114,7 @@ export class Game extends Scene {
     this.uiCamera.setScroll(0, 0);
     this.uiCamera.transparent = true;
 
-    // Enable WASD controls
-    this.wasd = {
-      up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-      down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-      left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-      right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
-    };
+
   }
 
   createUnitSelectionMenu() {
@@ -189,17 +198,7 @@ export class Game extends Scene {
   }
 
   setupInputHandlers() {
-    // Create a debounced console log function
-    let lastLog = 0;
-    const debouncedLog = (message, data) => {
-      const now = Date.now();
-      if (now - lastLog > GAME.DEBUG.LOG_DEBOUNCE) {
-        console.log(message, data);
-        lastLog = now;
-      }
-    };
-
-    // Zoom handler
+    // Set up zoom handler
     this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
       const zoom = this.cameras.main.zoom;
       if (deltaY > 0) {
@@ -231,33 +230,31 @@ export class Game extends Scene {
   // updating unit background colors for positioning / enable/disable repositioning
   // Updating Resources
   // more?
-  initializeNextRound(){
+  initializeNextRound() {
     this.currentRound++;
     this.unitSystem.updateAllUnitHighlights();
   }
 
-  switchPlayer(){
+  switchPlayer() {
     this.currentPlayer = this.currentPlayer === 'playerOne' ? 'playerTwo' : 'playerOne';
     this.changeCameraPerspective();
   }
 
-  changeCameraPerspective(){
+  changeCameraPerspective() {
     // Get deployment zone center from GridSystem
     const { x: deploymentZoneX, y: deploymentZoneY } = this.gridSystem.getDeploymentZoneCenter(this.currentPlayer);
-    console.log(`${this.currentPlayer} deployment zone center:`, deploymentZoneX, deploymentZoneY);
+    
     // Get current camera settings
     const camera = this.cameras.main;
-    const currentZoom = camera.zoom;
 
-    // Calculate camera offset (mirroring setupCameras)
-    const cameraHeight = this.scale.height / currentZoom;
-    const yOffset = cameraHeight * 0.8; // 80% of camera height
-    const uiOffset = UI.PANEL_HEIGHT * 1.65; // UI space offset
-
-    // Adjust scrollY based on player
-    const targetScrollY = this.currentPlayer === 'playerOne'
-        ? deploymentZoneY - yOffset + uiOffset  // PlayerOne: shift up to show UI
-        : deploymentZoneY + yOffset - uiOffset; // PlayerTwo: shift down to center properly
+    // Calculate target scroll position
+    const targetScrollX = 808; // Center point stays the same for both players
+    
+    // For player two, mirror the Y position across the world height
+    const worldHeight = 2900; // Total world height
+    const targetScrollY = this.currentPlayer === 'playerOne' 
+        ? 1803.8  // Original player one position
+        : GRID.PADDING.TOP + GRID.HEIGHT; // Mirrored position for player two
 
     // Target rotation based on current player
     const targetRotation = this.currentPlayer === 'playerOne' ? 0 : Math.PI;
@@ -265,18 +262,20 @@ export class Game extends Scene {
     // Animate camera movement and rotation
     this.tweens.add({
         targets: camera,
-        scrollX: deploymentZoneX - (this.scale.width / 2 / currentZoom), // Center horizontally
+        scrollX: targetScrollX,
         scrollY: targetScrollY,
         rotation: targetRotation,
         duration: 1000,
+        zoom: CAMERA.DEFAULT_ZOOM,
         ease: 'Power2'
     });
+    console.log('targetScrollY', targetScrollY, 'targetScrollX', targetScrollX);
   }
 
   update() {
     // Camera movement with WASD keys
     const camera = this.cameras.main;
-    
+
     // Determine movement direction based on current player perspective
     const moveX = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
     const moveY = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);

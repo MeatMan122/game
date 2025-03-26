@@ -5,7 +5,7 @@ export const GRID = {
     BASE_PADDING: 120,
     EXTRA_BOTTOM: 130,
     PADDING: {
-        TOP: 120,
+        TOP: 250,// BASE_PADDING + EXTRA_BOTTOM
         RIGHT: 120,
         BOTTOM: 250, // BASE_PADDING + EXTRA_BOTTOM
         LEFT: 120
@@ -54,7 +54,8 @@ export const CAMERA = {
     MOVE_SPEED: 16,
     MIN_ZOOM: 0.5,
     MAX_ZOOM: 2,
-    ZOOM_STEP: 0.1
+    ZOOM_STEP: 0.1,
+    DEFAULT_ZOOM: 0.75
 };
 
 export const ANIMATION = {
