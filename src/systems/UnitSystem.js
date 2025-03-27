@@ -74,9 +74,16 @@ export class UnitSystem {
             if (success) {
                 this.clearUnitSelection();
             }
+        } else {
+            // Check if we're clicking on a unit
+            const { gridX, gridY } = this.scene.gridSystem.getGridPositionFromPointer(pointer, this.scene.cameras.main);
+            const group = this.getUnitGroup(gridX, gridY);
+            
+            // Only select units that belong to the current player
+            if (group && this.canPlayerInteractWithUnit(group)) {
+                this.selectUnitGroup(group);
+            }
         }
-        
-        console.groupEnd();
     }
 
     registerButton(unitType, button) {
@@ -109,8 +116,20 @@ export class UnitSystem {
         return unit;
     }
     
+    // Helper to check if the current player can interact with a unit/group
+    canPlayerInteractWithUnit(group) {
+        if (!group) return false;
+        
+        const canInteract = group.owner === this.scene.currentPlayer;
+        return canInteract;
+    }
+    
     // Select a unit group
     selectUnitGroup(group) {
+        // Don't allow selecting units owned by the opponent
+        if (!this.canPlayerInteractWithUnit(group)) {
+            return;
+        }
         
         // If we already have a selected group that's repositioning, ignore
         if (this.selectedUnitGroup && this.selectedUnitGroup.isRepositioning) {
@@ -133,7 +152,8 @@ export class UnitSystem {
     
     // Start repositioning a unit group
     startRepositioningGroup(group) {
-        if (!group || !group.canReposition) {
+        // Verify that the group exists, can be repositioned, and belongs to the current player
+        if (!group || !group.canReposition || !this.canPlayerInteractWithUnit(group)) {
             return;
         }
         

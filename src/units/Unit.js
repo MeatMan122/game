@@ -123,7 +123,7 @@ export class Unit {
         const unitSystem = this.scene.unitSystem;
         const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
 
-        if (group && group.canReposition) {
+        if (group && unitSystem.canPlayerInteractWithUnit(group) && group.canReposition) {
             unitSystem.startRepositioningGroup(group);
         }
     }
