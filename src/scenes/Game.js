@@ -5,14 +5,14 @@ import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
 import { TestPanel } from "../ui/components/TestPanel";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH } from "../configs/Constants";
+import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS } from "../configs/Constants";
 
 /** @type {Phaser.Scene} */
 export class Game extends Scene {
   constructor() {
     super("Game");
     this.isTestingMode = false; // Default value
-    this.currentPlayer = 'playerOne'; // Track current player
+    this.currentPlayer = PLAYERS.PLAYER_ONE; // Track current player
     // Properties initialized with values
     this.previewUnit = null;
     this.gridGraphics = null;
@@ -236,7 +236,7 @@ export class Game extends Scene {
   }
 
   switchPlayer() {
-    this.currentPlayer = this.currentPlayer === 'playerOne' ? 'playerTwo' : 'playerOne';
+    this.currentPlayer = this.currentPlayer === PLAYERS.PLAYER_ONE ? PLAYERS.PLAYER_TWO : PLAYERS.PLAYER_ONE;
     this.changeCameraPerspective();
   }
 
@@ -252,12 +252,12 @@ export class Game extends Scene {
     
     // For player two, mirror the Y position across the world height
     const worldHeight = 2900; // Total world height
-    const targetScrollY = this.currentPlayer === 'playerOne' 
+    const targetScrollY = this.currentPlayer === PLAYERS.PLAYER_ONE 
         ? 1803.8  // Original player one position
-        : GRID.PADDING.TOP + GRID.HEIGHT; // Mirrored position for player two
+        : GRID.PADDING.TOP + GRID.HEIGHT; 
 
     // Target rotation based on current player
-    const targetRotation = this.currentPlayer === 'playerOne' ? 0 : Math.PI;
+    const targetRotation = this.currentPlayer === PLAYERS.PLAYER_ONE ? 0 : Math.PI;
 
     // Animate camera movement and rotation
     this.tweens.add({

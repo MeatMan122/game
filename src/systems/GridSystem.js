@@ -169,9 +169,9 @@ export class GridSystem {
     }
 
     getDeploymentZoneCenter(player) {
-        if (player === 'playerOne') {
+        if (player === PLAYERS.PLAYER_ONE) {
             return { x: this.playerDeploymentCenterX, y: this.playerDeploymentCenterY };
-        } else if (player === 'playerTwo') {
+        } else if (player === PLAYERS.PLAYER_TWO) {
             return { x: this.playerTwoDeploymentCenterX, y: this.playerTwoDeploymentCenterY };
         }
         return null;
@@ -220,7 +220,7 @@ export class GridSystem {
     }
 
     getCoordinatesForUnitDeployment(unitType) {
-        const currentPlayer = this.scene.currentPlayer || 'playerOne';
+        const currentPlayer = this.scene.currentPlayer || PLAYERS.PLAYER_ONE;
         
         // Use the pre-calculated deployment centers that were stored during grid creation
         const deploymentCenter = this.getDeploymentZoneCenter(currentPlayer);
