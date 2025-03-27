@@ -52,7 +52,8 @@ export class UnitGroup {
         const { snappedX, snappedY, gridX, gridY } = gridSystem.getGridPositionFromPointer(pointer, camera);
         
         // Check if the new position is valid
-        const isValid = this.isValidPlacement(gridX, gridY, gridSystem);
+        // const isValid = this.isValidPlacement(gridX, gridY, gridSystem);
+        const isValid = gridSystem.isValidUnoccupiedPosition(gridX, gridY, this.units.length, this.isVertical);   
         
         // Update unit positions to follow cursor
         this.units.forEach((unit, index) => {
@@ -70,15 +71,9 @@ export class UnitGroup {
         return { isValid, gridX, gridY, snappedX, snappedY };
     }
     
-    isValidPlacement(gridX, gridY, gridSystem) {
-        // Check if in player territory and position is valid
-        return gridSystem.getTerritoryAt(gridY) === 'player' &&
-               gridSystem.isValidUnoccupiedPosition(gridX, gridY, this.units.length, this.isVertical);
-    }
-    
     placeAtPosition(gridX, gridY, snappedX, snappedY, unitSystem, gridSystem) {
         // Verify placement is valid
-        if (!this.isValidPlacement(gridX, gridY, gridSystem)) {
+        if (!gridSystem.isValidUnoccupiedPosition(gridX, gridY, this.units.length, this.isVertical)) {
             gridSystem.showInvalidPlacementFeedback(this.units);
             return false;
         }
