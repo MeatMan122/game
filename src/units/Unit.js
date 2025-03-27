@@ -27,8 +27,15 @@ export class Unit {
         this.highlightSprite.setVisible(false); // Hidden by default
         this.scene.gameContainer.add(this.highlightSprite);
 
+        // Create selection outline (separate from highlight)
+        this.outlineSprite = this.scene.add.rectangle(0, 0, GRID.CELL_SIZE, GRID.CELL_SIZE, 0x00BFFF, 0);
+        this.outlineSprite.setStrokeStyle(3, 0x00BFFF); // 3px light blue outline
+        this.outlineSprite.setVisible(false); // Hidden by default
+        this.scene.gameContainer.add(this.outlineSprite);
+
         // Set highlight to a lower depth so it appears behind the unit sprite
         this.highlightSprite.setDepth(DEPTH.HIGHLIGHTS);
+        this.outlineSprite.setDepth(DEPTH.SELECTION);
 
         // Create the unit sprite
         this.sprite = this.scene.add.sprite(0, 0, `${this.unitType}-idle`, 0);
@@ -135,6 +142,9 @@ export class Unit {
             if (this.highlightSprite) {
                 this.highlightSprite.setPosition(x, y);
             }
+            if (this.outlineSprite) {
+                this.outlineSprite.setPosition(x, y);
+            }
             const { gridX, gridY } = this.scene.gridSystem.worldToGrid(x, y);
             this.gridX = gridX;
             this.gridY = gridY;
@@ -149,7 +159,15 @@ export class Unit {
 
     setSelected(selected) {
         this.isSelected = selected;
-        // Visual indicator for selection could be added here
+        this.updateHighlightColor();
+        
+        // Show highlight based on unit state (repositioning/created this round)
+        const showHighlight = this.roundCreated === this.scene.currentRound || 
+                             this.isRepositioning || 
+                             this.isInvalidPosition;
+        
+        this.highlightSprite.setVisible(showHighlight);
+        this.outlineSprite.setVisible(selected);
     }
 
     setRepositioning(repositioning) {
@@ -190,6 +208,10 @@ export class Unit {
         if (this.highlightSprite) {
             this.highlightSprite.destroy();
             this.highlightSprite = null;
+        }
+        if (this.outlineSprite) {
+            this.outlineSprite.destroy();
+            this.outlineSprite = null;
         }
         if (this.sprite) {
             this.sprite.destroy();

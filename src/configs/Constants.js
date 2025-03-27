@@ -109,6 +109,7 @@ export const GAME = {
 export const DEPTH = {
     BACKGROUND: 0,
     HIGHLIGHTS: 5,
+    SELECTION:6,
     GROUND_UNITS: 10,
     FLYING_UNITS: 15,
     EFFECTS: 20,
