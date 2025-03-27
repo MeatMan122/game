@@ -1,11 +1,25 @@
-import { RESOURCES, DEPTH } from '../configs/Constants';
+import { RESOURCES, DEPTH, PLAYERS } from '../configs/Constants';
 import { UNIT_CONFIGS } from '../configs/UnitConfigs';
 
 export class ResourceSystem {
     constructor(scene) {
         this.scene = scene;
-        this.gold = RESOURCES.STARTING_GOLD;
+        // Track separate gold amounts for each player
+        this.playerResources = {
+            [PLAYERS.PLAYER_ONE]: RESOURCES.STARTING_GOLD,
+            [PLAYERS.PLAYER_TWO]: RESOURCES.STARTING_GOLD
+        };
         this.goldText = null;
+    }
+
+    // Get current player's gold amount
+    get gold() {
+        return this.playerResources[this.scene.currentPlayer];
+    }
+
+    // Set current player's gold amount
+    set gold(value) {
+        this.playerResources[this.scene.currentPlayer] = value;
     }
 
     createGoldCounter(x, y) {
