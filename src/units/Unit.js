@@ -15,7 +15,7 @@ export class Unit {
         this.isSelected = false;
         this.isInvalidPosition = false; // New flag for invalid position state
         this.owner = scene.currentPlayer; // Track which player owns this unit
-        
+
         // Create the sprite
         this.createSprite();
     }
@@ -26,10 +26,10 @@ export class Unit {
         this.highlightSprite = this.scene.add.rectangle(0, 0, GRID.CELL_SIZE, GRID.CELL_SIZE, TERRITORY_COLORS.NO_MANS_LAND.color, 0.4);
         this.highlightSprite.setVisible(false); // Hidden by default
         this.scene.gameContainer.add(this.highlightSprite);
-        
+
         // Set highlight to a lower depth so it appears behind the unit sprite
         this.highlightSprite.setDepth(DEPTH.HIGHLIGHTS);
-        
+
         // Create the unit sprite
         this.sprite = this.scene.add.sprite(0, 0, `${this.unitType}-idle`, 0);
         this.sprite.play(`${this.unitType}-idle`);
@@ -37,10 +37,10 @@ export class Unit {
         this.sprite.unit = this; // Reference back to this Unit instance
         this.scene.gameContainer.add(this.sprite);
         this.sprite.setDepth(DEPTH.GROUND_UNITS); // Ensure unit is above the highlight
-        
+
         // Set up event handlers
         this.setupEventHandlers();
-        
+
         // Update highlight visibility based on whether unit can be repositioned
         this.updateHighlight();
     }
@@ -52,77 +52,77 @@ export class Unit {
             if (pointer.rightButtonDown()) return;
             // Get the unit system
             const unitSystem = this.scene.unitSystem;
-            
+
             // When in repositioning mode, allow the click to pass through
             // to potentially trigger the global click handler
             if (this.isRepositioning && pointer.event.detail === 1) {
                 // Handle the placement directly here
                 this.handleSingleClick(pointer);
-                
+
                 console.groupEnd();
                 return;
             }
-            
+
             // Prevent all event propagation for non-repositioning clicks
             if (pointer.event) {
                 pointer.event.stopPropagation();
                 pointer.event.preventDefault();
                 pointer.event.stopImmediatePropagation();
             }
-            
+
             // Check if this is a double-click using the browser's native detection
             if (pointer.event.detail > 1) {
                 this.handleDoubleClick(pointer);
             } else {
                 this.handleSingleClick(pointer);
             }
-            
+
             console.groupEnd();
         });
     }
-    
+
     handleSingleClick(pointer) {
         const unitSystem = this.scene.unitSystem;
-        
+
         // Get the group this unit belongs to
         const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
-        
+
         // If this unit's group is being repositioned, handle placement
         if (group && group.isRepositioning) {
-            
+
             // Get grid position for placement
             const { snappedX, snappedY, gridX, gridY } = this.scene.gridSystem.getGridPositionFromPointer(
-                pointer, 
+                pointer,
                 this.scene.cameras.main
             );
-            
+
             // Try to place the unit group
             group.placeAtPosition(
-                gridX, 
-                gridY, 
-                snappedX, 
-                snappedY, 
-                unitSystem, 
+                gridX,
+                gridY,
+                snappedX,
+                snappedY,
+                unitSystem,
                 this.scene.gridSystem
             );
-            
+
             return;
         }
-        
+
         // If another unit/group is being repositioned, ignore this click
-        if (unitSystem.selectedUnitGroup && 
-            unitSystem.selectedUnitGroup.isRepositioning && 
+        if (unitSystem.selectedUnitGroup &&
+            unitSystem.selectedUnitGroup.isRepositioning &&
             unitSystem.selectedUnitGroup !== group) {
             console.log('Another unit is being repositioned - ignoring click');
             return;
         }
         unitSystem.selectUnitGroup(group);
     }
-    
+
     handleDoubleClick(pointer) {
         const unitSystem = this.scene.unitSystem;
         const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
-        
+
         if (group && group.canReposition) {
             unitSystem.startRepositioningGroup(group);
         }
@@ -169,15 +169,21 @@ export class Unit {
         if (!this.highlightSprite) return;
 
         let color;
-        if (this.isInvalidPosition) {
-            color = UNIT.FEEDBACK.COLOR;
-        } else if (this.isRepositioning) {
-            color = TERRITORY_COLORS.DEPLOYMENT.color;
+        let alpha = 0.4;
+        if (this.owner === this.scene.currentPlayer) {
+            if (this.isInvalidPosition) {
+                color = UNIT.FEEDBACK.COLOR;
+            } else if (this.isRepositioning) {
+                color = TERRITORY_COLORS.DEPLOYMENT.color;
+            } else {
+                color = TERRITORY_COLORS.NO_MANS_LAND.color;
+            }
         } else {
-            color = TERRITORY_COLORS.NO_MANS_LAND.color;
+            color = 0x000000;
+            alpha = 0; // Transparent black (alpha will be set separately)
         }
 
-        this.highlightSprite.setFillStyle(color, 0.4);
+        this.highlightSprite.setFillStyle(color, alpha);
     }
 
     destroy() {
@@ -212,7 +218,7 @@ export class Unit {
     toggleRotation() {
         if (this.isRepositioning) {
             this.isVertical = !this.isVertical;
-        } 
+        }
     }
 
     // Update the highlight visibility based on whether the unit can be repositioned
@@ -220,7 +226,7 @@ export class Unit {
         // A unit can be repositioned if it was created in the current round
         const canReposition = this.roundCreated === this.scene.currentRound;
         this.highlightSprite.setVisible(canReposition);
-        
+
         // Force the highlight to match the unit's position exactly
         if (canReposition && this.sprite) {
             this.highlightSprite.setPosition(this.sprite.x, this.sprite.y);

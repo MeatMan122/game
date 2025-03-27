@@ -238,6 +238,7 @@ export class Game extends Scene {
   switchPlayer() {
     this.currentPlayer = this.currentPlayer === PLAYERS.PLAYER_ONE ? PLAYERS.PLAYER_TWO : PLAYERS.PLAYER_ONE;
     this.changeCameraPerspective();
+    this.unitSystem.updateAllUnitHighlights();
   }
 
   changeCameraPerspective() {
