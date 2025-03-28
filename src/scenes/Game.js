@@ -240,6 +240,9 @@ export class Game extends Scene {
     this.changeCameraPerspective();
     this.unitSystem.updateAllUnitHighlights();
     this.resourceSystem.updateGoldDisplay();
+    if (this.unitSystem.selectedUnitGroup){
+      this.unitSystem.selectedUnitGroup.setSelected(false);
+    }
   }
 
   changeCameraPerspective() {
