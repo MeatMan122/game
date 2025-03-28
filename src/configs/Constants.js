@@ -123,3 +123,24 @@ export const PLAYERS = {
     PLAYER_ONE: 'playerOne',
     PLAYER_TWO: 'playerTwo'
 };
+
+export const TIMER = {
+    DEFAULT_DURATION: 90, // seconds
+    POSITION: {
+        X: 0.5, // center of screen
+        Y: 25   // pixels from top
+    },
+    STYLE: {
+        FONT_SIZE: '32px',
+        COLOR: '#FFFFFF',
+        FONT_STYLE: 'bold'
+    },
+    READY_BUTTON: {
+        WIDTH: 120,
+        HEIGHT: 40,
+        COLOR: 0x4CAF50,
+        HOVER_COLOR: 0x45A049,
+        TEXT_COLOR: '#FFFFFF',
+        Y_OFFSET: 20  // pixels below timer
+    }
+};

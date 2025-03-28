@@ -1,4 +1,5 @@
 import { DEPTH } from '../../configs/Constants';
+import { Button } from './Button';
 
 export class TestPanel {
     constructor(scene) {
@@ -37,26 +38,24 @@ export class TestPanel {
         );
         this.background.setOrigin(0, 0);
 
-        // Create toggle button
-        this.toggleButton = this.scene.add.text(
-            this.width - 5,
-            this.height / 2,
-            '>',
-            {
-                fontSize: '24px',
-                color: '#ffffff',
-                backgroundColor: '#444444',
-                padding: { x: 10, y: 10 }
-            }
-        );
-        this.toggleButton.setOrigin(1, 0.5);
-        this.toggleButton.setInteractive({ useHandCursor: true });
-        
-        // Add click handler for toggle button
-        this.toggleButton.on('pointerdown', () => this.toggle());
+        // Create toggle button with the Button component
+        this.toggleButton = new Button(this.scene, {
+            x: this.width - 5,
+            y: this.height / 2,
+            width: 30,
+            height: 40,
+            text: '>',
+            textStyle: { fontSize: '24px', color: '#ffffff' },
+            backgroundColor: 0x444444,
+            hoverColor: 0x555555,
+            onClick: () => this.toggle(),
+            originX: 1,
+            originY: 0.5
+        });
 
         // Add elements to container
-        this.container.add([this.background, this.toggleButton]);
+        this.container.add([this.background]);
+        this.container.add(this.toggleButton.container);
 
         // Create content container for future elements
         this.contentContainer = this.scene.add.container(this.padding, this.padding);
@@ -79,28 +78,24 @@ export class TestPanel {
     }
 
     addButton(text, callback) {
-        const button = this.scene.add.text(0, this.nextButtonY, text, {
-            fontSize: '16px',
-            color: '#ffffff',
-            backgroundColor: '#555555',
-            padding: { x: 10, y: 5 }
+        const button = new Button(this.scene, {
+            x: 0,
+            y: this.nextButtonY,
+            width: this.width - (this.padding * 2),
+            height: 30,
+            text: text,
+            textStyle: { fontSize: '16px', color: '#ffffff',padding: { x: 10, y: 10 } },
+            backgroundColor: 0x555555,
+            hoverColor: 0x666666,
+            onClick: callback,
+            originX: 0,
+            originY: 0
         });
         
-        button.setInteractive({ useHandCursor: true });
-        button.on('pointerdown', callback);
-        
-        // Add hover effect
-        button.on('pointerover', () => {
-            button.setStyle({ backgroundColor: '#666666' });
-        });
-        button.on('pointerout', () => {
-            button.setStyle({ backgroundColor: '#555555' });
-        });
-
-        this.addContent(button);
+        this.addContent(button.container);
         
         // Update the Y position for the next button
-        this.nextButtonY += button.height + this.buttonSpacing;
+        this.nextButtonY += 35 + this.buttonSpacing;
         
         return button;
     }

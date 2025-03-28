@@ -1,11 +1,12 @@
 import { Scene } from "phaser";
-import { UnitButton } from "../ui/components/UnitButton";
+import { Button } from "../ui/components/Button";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
 import { TestPanel } from "../ui/components/TestPanel";
+import { CountdownTimer } from "../ui/components/CountdownTimer";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS } from "../configs/Constants";
+import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER } from "../configs/Constants";
 
 /** @type {Phaser.Scene} */
 export class Game extends Scene {
@@ -33,6 +34,9 @@ export class Game extends Scene {
     // Unit buttons (initialized in createButtons())
     this.ArcherButton = null;
     this.warriorButton = null;
+    
+    // Timer element
+    this.countdownTimer = null;
   }
 
   init(data) {
@@ -59,6 +63,9 @@ export class Game extends Scene {
     // Create grid
     this.gridSystem.create(this.gameContainer);
 
+    // Create countdown timer and ready button
+    this.createCountdownTimer();
+
     // Create UI
     this.createUnitSelectionMenu();
 
@@ -75,7 +82,6 @@ export class Game extends Scene {
     // Set up input handlers
     this.setupInputHandlers();
     console.log('Camera at start: ', { scrollX: this.cameras.main.scrollX, scrollY: this.cameras.main.scrollY, height: this.scale.height, worldSizeHeight: this.gridSystem.getWorldSize().height });
-
   }
 
   setupKeybindings() {
@@ -152,6 +158,7 @@ export class Game extends Scene {
   }
 
   createButtons(uiContainer) {
+    // Create both buttons using the new Button component
     this.ArcherButton = this.createUnitButton(UNIT_TYPES.ARCHER, UI.BUTTON.PADDING, UI.BUTTON.SPACING, UI.BUTTON.SIZE);
     this.warriorButton = this.createUnitButton(UNIT_TYPES.WARRIOR, UI.BUTTON.PADDING + UI.BUTTON.SPACING, UI.BUTTON.SPACING, UI.BUTTON.SIZE);
 
@@ -159,15 +166,22 @@ export class Game extends Scene {
   }
 
   createUnitButton(unitType, x, y, size) {
-    const button = new UnitButton(this, {
+    const button = new Button(this, {
       x: x,
       y: this.scale.height - UI.PANEL_HEIGHT / 2,
-      size: size,
-      color: UNIT_CONFIGS[unitType].color,
-      name: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
-      onClick: () => this.handleCreateUnitButtonClick(unitType)
+      width: size,
+      height: size,
+      backgroundColor: UNIT_CONFIGS[unitType].color,
+      hoverColor: UNIT_CONFIGS[unitType].color,
+      isUnitStyle: true,
+      showStrokeOnHover: true,
+      hoverText: `${unitType}\n(${UNIT_CONFIGS[unitType].cost} gold)`,
+      onClick: () => this.handleCreateUnitButtonClick(unitType),
+      depth: DEPTH.UI_ELEMENTS,
+      originX: 0.5,
+      originY: 0.5
     });
-    button.setDepth(DEPTH.UI_ELEMENTS);
+    
     this.unitSystem.registerButton(unitType, button);
     return button;
   }
@@ -298,4 +312,20 @@ export class Game extends Scene {
       camera.scrollY += moveY;
     }
   }
+
+  createCountdownTimer() {
+    // Create the countdown timer component with callbacks
+    this.countdownTimer = new CountdownTimer(this, {
+      duration: TIMER.DEFAULT_DURATION,
+      onReady: () => this.handlePlayerReady(),
+      onTimeComplete: () => this.handleTimerComplete()
+    });
+    
+    // Make main camera ignore timer UI
+    this.cameras.main.ignore(this.countdownTimer.container);
+  }
+  handlePlayerReady(){
+
+  }
+  handleTimerComplete(){}
 }
