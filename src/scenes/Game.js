@@ -6,7 +6,7 @@ import { UnitSystem } from "../systems/UnitSystem";
 import { TestPanel } from "../ui/components/TestPanel";
 import { CountdownTimer } from "../ui/components/CountdownTimer";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER } from "../configs/Constants";
+import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER, PHASE } from "../configs/Constants";
 
 /** @type {Phaser.Scene} */
 export class Game extends Scene {
@@ -34,7 +34,7 @@ export class Game extends Scene {
     // Unit buttons (initialized in createButtons())
     this.ArcherButton = null;
     this.warriorButton = null;
-    
+
     // Timer element
     this.countdownTimer = null;
   }
@@ -82,6 +82,28 @@ export class Game extends Scene {
     // Set up input handlers
     this.setupInputHandlers();
     console.log('Camera at start: ', { scrollX: this.cameras.main.scrollX, scrollY: this.cameras.main.scrollY, height: this.scale.height, worldSizeHeight: this.gridSystem.getWorldSize().height });
+  }
+
+  update() {
+    // Camera movement with WASD keys
+    const camera = this.cameras.main;
+
+    // Determine movement direction based on current player perspective
+    const moveX = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
+    const moveY = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
+
+    if (this.wasd.left.isDown) {
+      camera.scrollX -= moveX;
+    }
+    if (this.wasd.right.isDown) {
+      camera.scrollX += moveX;
+    }
+    if (this.wasd.up.isDown) {
+      camera.scrollY -= moveY;
+    }
+    if (this.wasd.down.isDown) {
+      camera.scrollY += moveY;
+    }
   }
 
   setupKeybindings() {
@@ -181,7 +203,7 @@ export class Game extends Scene {
       originX: 0.5,
       originY: 0.5
     });
-    
+
     this.unitSystem.registerButton(unitType, button);
     return button;
   }
@@ -239,14 +261,30 @@ export class Game extends Scene {
     }, false);
   }
 
-  //This is where we will do all logic for the next round's initialization including:
-  // re-spawning units in same location as player set
-  // updating unit background colors for positioning / enable/disable repositioning
-  // Updating Resources
-  // more?
+  handleRoundPhaseChange(phase) {
+    switch (phase) {
+      case PHASE.OPENING:
+        break;
+      case PHASE.POWERUP:
+        this.initializeNextRound();
+        break;
+      case PHASE.PLANNING:
+        break;
+      case PHASE.BATTLE:
+        break;
+      case PHASE.RESOLUTION:
+        break;
+    }
+  }
+
+
   initializeNextRound() {
     this.currentRound++;
+    this.countdownTimer.resetReadyStatus();
+    this.countdownTimer.reset();
     this.unitSystem.updateAllUnitHighlights();
+    console.log('Advanced to round:', this.currentRound);
+
   }
 
   switchPlayer() {
@@ -254,7 +292,7 @@ export class Game extends Scene {
     this.changeCameraPerspective();
     this.unitSystem.updateAllUnitHighlights();
     this.resourceSystem.updateGoldDisplay();
-    if (this.unitSystem.selectedUnitGroup){
+    if (this.unitSystem.selectedUnitGroup) {
       this.unitSystem.selectedUnitGroup.setSelected(false);
     }
   }
@@ -262,56 +300,35 @@ export class Game extends Scene {
   changeCameraPerspective() {
     // Get deployment zone center from GridSystem
     const { x: deploymentZoneX, y: deploymentZoneY } = this.gridSystem.getDeploymentZoneCenter(this.currentPlayer);
-    
+
     // Get current camera settings
     const camera = this.cameras.main;
 
     // Calculate target scroll position
     const targetScrollX = 808; // Center point stays the same for both players
-    
+
     // For player two, mirror the Y position across the world height
     const worldHeight = 2900; // Total world height
-    const targetScrollY = this.currentPlayer === PLAYERS.PLAYER_ONE 
-        ? 1803.8  // Original player one position
-        : GRID.PADDING.TOP + GRID.HEIGHT; 
+    const targetScrollY = this.currentPlayer === PLAYERS.PLAYER_ONE
+      ? 1803.8  // Original player one position
+      : GRID.PADDING.TOP + GRID.HEIGHT;
 
     // Target rotation based on current player
     const targetRotation = this.currentPlayer === PLAYERS.PLAYER_ONE ? 0 : Math.PI;
 
     // Animate camera movement and rotation
     this.tweens.add({
-        targets: camera,
-        scrollX: targetScrollX,
-        scrollY: targetScrollY,
-        rotation: targetRotation,
-        duration: 1000,
-        zoom: CAMERA.DEFAULT_ZOOM,
-        ease: 'Power2'
+      targets: camera,
+      scrollX: targetScrollX,
+      scrollY: targetScrollY,
+      rotation: targetRotation,
+      duration: 1000,
+      zoom: CAMERA.DEFAULT_ZOOM,
+      ease: 'Power2'
     });
-    console.log('targetScrollY', targetScrollY, 'targetScrollX', targetScrollX);
   }
 
-  update() {
-    // Camera movement with WASD keys
-    const camera = this.cameras.main;
-
-    // Determine movement direction based on current player perspective
-    const moveX = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
-    const moveY = CAMERA.MOVE_SPEED * (this.currentPlayer === 'playerTwo' ? -1 : 1);
-
-    if (this.wasd.left.isDown) {
-      camera.scrollX -= moveX;
-    }
-    if (this.wasd.right.isDown) {
-      camera.scrollX += moveX;
-    }
-    if (this.wasd.up.isDown) {
-      camera.scrollY -= moveY;
-    }
-    if (this.wasd.down.isDown) {
-      camera.scrollY += moveY;
-    }
-  }
+  
 
   createCountdownTimer() {
     // Create the countdown timer component with callbacks
@@ -320,12 +337,21 @@ export class Game extends Scene {
       onReady: () => this.handlePlayerReady(),
       onTimeComplete: () => this.handleTimerComplete()
     });
-    
+
     // Make main camera ignore timer UI
     this.cameras.main.ignore(this.countdownTimer.container);
   }
-  handlePlayerReady(){
-
+  handlePlayerReady() {
+    console.log('Called handlePlayerReady')
   }
-  handleTimerComplete(){}
+  handleTimerComplete() {
+    console.log('called handleTimerComplete')
+    this.countdownTimer.reset();
+  }
+
+  startBattle() {
+    // This method will be implemented later to start the battle phase
+    console.log('Both players are ready! Starting battle...');
+  }
+
 }

@@ -63,7 +63,6 @@ export class TestPanel {
     }
 
     initializeTestButtons() {
-        // Add more test buttons as needed
         this.addButton('Switch Player', () => {
             // Example functionality
             this.scene.switchPlayer();
@@ -71,9 +70,8 @@ export class TestPanel {
         });
 
         this.addButton('Next Round', () => {
-            this.scene.currentRound++;
             this.scene.initializeNextRound();
-            console.log('Advanced to round:', this.scene.currentRound);
+            
         });
     }
 

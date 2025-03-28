@@ -144,3 +144,11 @@ export const TIMER = {
         Y_OFFSET: 20  // pixels below timer
     }
 };
+
+export const PHASE = {
+    OPENING: "Opening", 
+    POWERUP: "Powerup",
+    PLANNING: "Planning",
+    BATTLE: "Battle",
+    RESOLUTION: "Resolution",
+}
