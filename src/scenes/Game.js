@@ -81,7 +81,7 @@ export class Game extends Scene {
 
     // Set up input handlers
     this.setupInputHandlers();
-    console.log('Camera at start: ', { scrollX: this.cameras.main.scrollX, scrollY: this.cameras.main.scrollY, height: this.scale.height, worldSizeHeight: this.gridSystem.getWorldSize().height });
+    this.handleRoundPhaseChange(PHASE.OPENING);
   }
 
   update() {
