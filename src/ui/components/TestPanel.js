@@ -4,7 +4,7 @@ import { Button } from './Button';
 export class TestPanel {
     constructor(scene) {
         this.scene = scene;
-        this.isExpanded = true;
+        this.isExpanded = false;
         this.container = null;
         this.background = null;
         this.toggleButton = null;
@@ -25,6 +25,10 @@ export class TestPanel {
     createPanel() {
         // Create container for all panel elements
         this.container = this.scene.add.container(0, this.yOffset);
+        
+        // Set initial position for closed state
+        this.container.x = -this.width + 30;
+        
         this.container.setDepth(DEPTH.UI_ELEMENTS);
 
         // Create background panel
@@ -44,7 +48,7 @@ export class TestPanel {
             y: this.height / 2,
             width: 30,
             height: 40,
-            text: '>',
+            text: '<',
             textStyle: { fontSize: '24px', color: '#ffffff' },
             backgroundColor: 0x444444,
             hoverColor: 0x555555,
