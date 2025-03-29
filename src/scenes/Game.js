@@ -375,6 +375,7 @@ export class Game extends Scene {
     // Show powerup menu
     const powerupMenu = new PowerupMenu(this);
     powerupMenu.create();
+    this.cameras.main.ignore(powerupMenu.container);
     
     console.log('Advanced to round:', this.currentRound, 'Gold reward:', goldReward);
   }

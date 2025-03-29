@@ -46,25 +46,27 @@ export class PowerupMenu {
      * Sets up the modal background, container, and animates the menu in.
      */
     create() {
+        // Create container for menu elements first
+        this.container = this.scene.add.container(
+            this.modalX + this.modalWidth / 2,
+            this.modalY + this.modalHeight / 2
+        );
+        this.container.setDepth(DEPTH.UI_FULLSCREEN);
+        
         // Create opaque background for modal
         this.modalBg = this.scene.add.rectangle(
-            this.modalX,
-            this.modalY,
+            -this.modalWidth / 2,  // Relative to container center
+            -this.modalHeight / 2, // Relative to container center
             this.modalWidth,
             this.modalHeight,
             POWERUP_MENU.BACKGROUND.COLOR,
             POWERUP_MENU.BACKGROUND.ALPHA
         );
         this.modalBg.setOrigin(0);
-        this.modalBg.setDepth(DEPTH.UI_FULLSCREEN);
         this.modalBg.setInteractive();
-
-        // Create container for menu elements
-        this.container = this.scene.add.container(
-            this.modalX + this.modalWidth / 2,
-            this.modalY + this.modalHeight / 2
-        );
-        this.container.setDepth(DEPTH.UI_FULLSCREEN);
+        
+        // Add background to container
+        this.container.add(this.modalBg);
 
         this.createPowerupChoices();
         this.createHideButton();
@@ -80,18 +82,9 @@ export class PowerupMenu {
     animateIn() {
         // Start from above screen
         const startY = -this.modalHeight;
-        this.modalBg.y = startY;
         this.container.y = startY + this.modalHeight / 2;
 
-        // Slide down animation
-        this.scene.tweens.add({
-            targets: [this.modalBg],
-            y: this.modalY,
-            duration: POWERUP_MENU.ANIMATION.SLIDE_DURATION,
-            ease: 'Power2',
-        });
-
-        // Animate container in sync with background
+        // Slide down animation (animate the container only, which includes modalBg)
         this.scene.tweens.add({
             targets: [this.container],
             y: this.modalY + this.modalHeight / 2,
@@ -210,29 +203,21 @@ export class PowerupMenu {
         // Get the final position of the show button
         const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
         const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
+        const buttonY = TIMER.POSITION.Y;
 
-        // Collapse animation
+        // Move container to the show button position
         this.scene.tweens.add({
-            targets: [this.modalBg],
-            x: buttonX - POWERUP_MENU.SHOW_BUTTON.WIDTH / 2,
-            y: TIMER.POSITION.Y - POWERUP_MENU.SHOW_BUTTON.HEIGHT / 2,
-            width: POWERUP_MENU.SHOW_BUTTON.WIDTH,
-            height: POWERUP_MENU.SHOW_BUTTON.HEIGHT,
+            targets: [this.container],
+            x: buttonX,
+            y: buttonY,
+            scale: POWERUP_MENU.SHOW_BUTTON.WIDTH / this.modalWidth,
+            alpha: 0,
             duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
             ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE,
             onComplete: () => {
-                this.modalBg.setVisible(false);
                 this.container.setVisible(false);
                 this.createShowButton();
             }
-        });
-
-        // Fade out container
-        this.scene.tweens.add({
-            targets: [this.container],
-            alpha: 0,
-            duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
-            ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE
         });
     }
 
@@ -241,38 +226,21 @@ export class PowerupMenu {
      * Destroys the show button and displays the full menu with animation.
      */
     show() {
-        // Make elements visible
-        this.modalBg.setVisible(true);
+        // Make container visible
         this.container.setVisible(true);
-        this.container.setAlpha(1); // Set alpha to 1 since we're not fading
+        this.container.setAlpha(1);
 
         // Get current button position
         const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
         const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
+        const buttonY = TIMER.POSITION.Y;
 
         // Set initial position (at show button)
-        this.modalBg.x = buttonX - POWERUP_MENU.SHOW_BUTTON.WIDTH / 2;
-        this.modalBg.y = TIMER.POSITION.Y - POWERUP_MENU.SHOW_BUTTON.HEIGHT / 2;
-        this.modalBg.width = POWERUP_MENU.SHOW_BUTTON.WIDTH;
-        this.modalBg.height = POWERUP_MENU.SHOW_BUTTON.HEIGHT;
-
-        // Set container's initial position to match the show button
         this.container.x = buttonX;
-        this.container.y = TIMER.POSITION.Y;
+        this.container.y = buttonY;
         this.container.setScale(POWERUP_MENU.SHOW_BUTTON.WIDTH / this.modalWidth);
 
-        // Expand animation for background
-        this.scene.tweens.add({
-            targets: [this.modalBg],
-            x: this.modalX,
-            y: this.modalY,
-            width: this.modalWidth,
-            height: this.modalHeight,
-            duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
-            ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE
-        });
-
-        // Expand and move container in sync with background
+        // Expand animation for container
         this.scene.tweens.add({
             targets: [this.container],
             x: this.modalX + this.modalWidth / 2,
