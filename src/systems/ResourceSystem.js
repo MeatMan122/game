@@ -22,6 +22,28 @@ export class ResourceSystem {
         this.playerResources[this.scene.currentPlayer] = value;
     }
 
+    /**
+     * Adds the specified amount of gold to all players.
+     * @param {number} amount - Amount of gold to add
+     */
+    addGoldToAllPlayers(amount) {
+        Object.keys(this.playerResources).forEach(player => {
+            this.playerResources[player] += amount;
+        });
+        this.updateGoldDisplay();
+    }
+
+    /**
+     * Sets the specified amount of gold for all players.
+     * @param {number} amount - Amount of gold to set
+     */
+    setGoldForAllPlayers(amount) {
+        Object.keys(this.playerResources).forEach(player => {
+            this.playerResources[player] = amount;
+        });
+        this.updateGoldDisplay();
+    }
+
     createGoldCounter(x, y) {
         this.goldText = this.scene.add.text(
             x,

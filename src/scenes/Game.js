@@ -359,14 +359,12 @@ export class Game extends Scene {
     const totalRoundsBonus = (this.currentRound - 1) * RESOURCES.GOLD_PER_ROUND_INCREMENT;
     const goldReward = RESOURCES.STARTING_GOLD + totalRoundsBonus;
     
-    // Update resources
-    if(this.currentRound > 1){
-      this.resourceSystem.gold += goldReward;
+    // Update resources for ALL players, not just the current one
+    if(this.currentRound > 1) {
+      this.resourceSystem.addGoldToAllPlayers(goldReward);
+    } else {
+      this.resourceSystem.setGoldForAllPlayers(goldReward);
     }
-    else {
-      this.resourceSystem.gold = goldReward;
-    }
-    this.resourceSystem.updateGoldDisplay();
     
     // Make sure fog of war is enabled
     this.fogOfWarSystem.toggle(true);
