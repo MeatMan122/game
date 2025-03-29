@@ -450,6 +450,9 @@ export class Game extends Scene {
   }
   handlePlayerReady() {
     console.log('Called handlePlayerReady')
+    if (this.currentPhase == PHASE.PLANNING) {
+      this.handleRoundPhaseChange(PHASE.BATTLE);
+    }
   }
   /**
    * Handles timer completion events.

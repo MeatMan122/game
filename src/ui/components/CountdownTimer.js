@@ -227,6 +227,8 @@ export class CountdownTimer {
       this.player2Indicator.fillColor = 0x00FF00; // Green for ready
     }
     // Notify game about ready status
-    this.onReady();
+    if (this.player1Ready && this.player2Ready){
+      this.onReady();
+    }
   }
 } 

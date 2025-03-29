@@ -133,7 +133,7 @@ export const PLAYERS = {
 };
 
 export const TIMER = {
-    DEFAULT_DURATION: 30, // seconds
+    DEFAULT_DURATION: 90, // seconds
     POSITION: {
         X: 0.5, // center of screen
         Y: 25   // pixels from top
