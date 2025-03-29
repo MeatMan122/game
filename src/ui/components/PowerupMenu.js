@@ -1,4 +1,5 @@
 import { DEPTH, PHASE, POWERUP_MENU, TIMER } from '../../configs/Constants';
+import { Button } from './Button';
 
 /**
  * A modal menu that displays powerup choices between rounds.
@@ -21,6 +22,8 @@ export class PowerupMenu {
         this.container = null;
         this.modalBg = null;
         this.showButton = null;
+        this.powerupButtons = [];
+        this.hideButtonInstance = null;
         
         // Calculate required width for buttons
         const totalButtonWidth = (POWERUP_MENU.CHOICE_BUTTON.WIDTH * 4) + 
@@ -110,28 +113,30 @@ export class PowerupMenu {
 
         choices.forEach((choice, index) => {
             const x = (index - 1.5) * (buttonWidth + spacing);
-            const button = this.scene.add.rectangle(
-                x, 0,
-                buttonWidth, buttonHeight,
-                POWERUP_MENU.CHOICE_BUTTON.COLOR
-            );
-            button.setInteractive();
-
-            const text = this.scene.add.text(
-                x, 0,
-                choice,
-                {
+            
+            // Create button using Button component
+            const button = new Button(this.scene, {
+                x: x,
+                y: 0,
+                width: buttonWidth,
+                height: buttonHeight,
+                text: choice,
+                textStyle: {
                     fontSize: POWERUP_MENU.CHOICE_BUTTON.TEXT.FONT_SIZE,
                     color: POWERUP_MENU.CHOICE_BUTTON.TEXT.COLOR
-                }
-            );
-            text.setOrigin(0.5);
-
-            button.on('pointerdown', () => this.handleSelection(choice));
-            button.on('pointerover', () => button.setScale(1.05));
-            button.on('pointerout', () => button.setScale(1));
-
-            this.container.add([button, text]);
+                },
+                backgroundColor: POWERUP_MENU.CHOICE_BUTTON.COLOR,
+                hoverColor: 0xcccccc, // Lighter color on hover
+                onClick: () => this.handleSelection(choice),
+                originX: 0.5,
+                originY: 0.5
+            });
+            
+            // Store reference to button for cleanup
+            this.powerupButtons.push(button);
+            
+            // Add button container to menu container
+            this.container.add(button.container);
         });
     }
 
@@ -140,26 +145,26 @@ export class PowerupMenu {
      * @private
      */
     createHideButton() {
-        const button = this.scene.add.rectangle(
-            0, 100,
-            POWERUP_MENU.SHOW_BUTTON.WIDTH,
-            POWERUP_MENU.SHOW_BUTTON.HEIGHT,
-            POWERUP_MENU.SHOW_BUTTON.COLOR
-        );
-        button.setInteractive();
-
-        const text = this.scene.add.text(
-            0, 100,
-            'Hide Powerup Menu',
-            {
+        // Create hide button using Button component
+        this.hideButtonInstance = new Button(this.scene, {
+            x: 0,
+            y: 150,
+            width: POWERUP_MENU.SHOW_BUTTON.WIDTH,
+            height: POWERUP_MENU.SHOW_BUTTON.HEIGHT,
+            text: 'Hide Powerup Menu',
+            textStyle: {
                 fontSize: POWERUP_MENU.SHOW_BUTTON.TEXT.FONT_SIZE,
                 color: POWERUP_MENU.SHOW_BUTTON.TEXT.COLOR
-            }
-        );
-        text.setOrigin(0.5);
-
-        button.on('pointerdown', () => this.hide());
-        this.container.add([button, text]);
+            },
+            backgroundColor: POWERUP_MENU.SHOW_BUTTON.COLOR,
+            hoverColor: 0x777777, // Darker on hover
+            onClick: () => this.hide(),
+            originX: 0.5,
+            originY: 0.5
+        });
+        
+        // Add button container to menu container
+        this.container.add(this.hideButtonInstance.container);
     }
 
     /**
@@ -172,32 +177,26 @@ export class PowerupMenu {
         const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
         const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
         
-        this.showButton = this.scene.add.container(
-            buttonX,
-            TIMER.POSITION.Y
-        );
-        this.showButton.setDepth(DEPTH.UI_FULLSCREEN);
-
-        const button = this.scene.add.rectangle(
-            0, 0,
-            POWERUP_MENU.SHOW_BUTTON.WIDTH,
-            POWERUP_MENU.SHOW_BUTTON.HEIGHT,
-            POWERUP_MENU.SHOW_BUTTON.COLOR
-        );
-        button.setInteractive();
-
-        const text = this.scene.add.text(
-            0, 0,
-            'Show Powerup Menu',
-            {
+        // Create show button using Button component
+        const showButtonInstance = new Button(this.scene, {
+            x: buttonX,
+            y: TIMER.POSITION.Y,
+            width: POWERUP_MENU.SHOW_BUTTON.WIDTH,
+            height: POWERUP_MENU.SHOW_BUTTON.HEIGHT,
+            text: 'Show Powerup Menu',
+            textStyle: {
                 fontSize: POWERUP_MENU.SHOW_BUTTON.TEXT.FONT_SIZE,
                 color: POWERUP_MENU.SHOW_BUTTON.TEXT.COLOR
-            }
-        );
-        text.setOrigin(0.5);
-
-        button.on('pointerdown', () => this.show());
-        this.showButton.add([button, text]);
+            },
+            backgroundColor: POWERUP_MENU.SHOW_BUTTON.COLOR,
+            hoverColor: 0x777777, // Darker on hover
+            onClick: () => this.show(),
+            depth: DEPTH.UI_FULLSCREEN,
+            originX: 0.5,
+            originY: 0.5
+        });
+        
+        this.showButton = showButtonInstance.container;
     }
 
     /**
@@ -303,5 +302,9 @@ export class PowerupMenu {
         if (this.modalBg) this.modalBg.destroy();
         if (this.container) this.container.destroy();
         if (this.showButton) this.showButton.destroy();
+        
+        // Clean up button references
+        this.powerupButtons = [];
+        this.hideButtonInstance = null;
     }
 } 
