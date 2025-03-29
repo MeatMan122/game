@@ -70,6 +70,11 @@ export const TERRITORY_COLORS = {
     DEPLOYMENT: { color: 0x00ff00, alpha: 0.2 }
 };
 
+export const FOG_OF_WAR = {
+    COLOR: 0x333333,
+    ALPHA: 0.6,
+};
+
 export const GRID_STYLE = {
     LINE_WIDTH: 1,
     LINE_COLOR: 0x666666,
@@ -114,6 +119,7 @@ export const DEPTH = {
     GROUND_UNITS: 10,
     FLYING_UNITS: 15,
     EFFECTS: 20,
+    FOG_OF_WAR: 25,
     UI_BACKGROUND: 95,
     UI_ELEMENTS: 100,
     UI_FOREGROUND: 105,

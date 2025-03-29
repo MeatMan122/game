@@ -221,13 +221,17 @@ export class Unit {
         this.isSelected = selected;
         this.updateHighlightColor();
         
+        const isCurrentRound = this.roundCreated === this.scene.currentRound;
+        const isOwnedByCurrentPlayer = this.owner === this.scene.currentPlayer;
+        
         // Show highlight based on unit state (repositioning/created this round)
-        const showHighlight = this.roundCreated === this.scene.currentRound || 
-                             this.isRepositioning || 
-                             this.isInvalidPosition;
+        const showHighlight = (isCurrentRound || 
+                              this.isRepositioning || 
+                              this.isInvalidPosition) && 
+                              isOwnedByCurrentPlayer;
         
         this.highlightSprite.setVisible(showHighlight);
-        this.outlineSprite.setVisible(selected);
+        this.outlineSprite.setVisible(this.isSelected && isOwnedByCurrentPlayer);
     }
 
     /**
@@ -332,12 +336,33 @@ export class Unit {
      * @private
      */
     updateHighlight() {
-        // A unit can be repositioned if it was created in the current round
-        const canReposition = this.roundCreated === this.scene.currentRound;
-        this.highlightSprite.setVisible(canReposition);
-
+        if (!this.sprite) return;
+        
+        const currentPlayer = this.scene.currentPlayer;
+        const isFogActive = this.scene.fogOfWarSystem && this.scene.fogOfWarSystem.enabled;
+        const isCurrentRound = this.roundCreated === this.scene.currentRound;
+        const isOwnedByCurrentPlayer = this.owner === currentPlayer;
+        
+        // Determine unit visibility based on fog of war rules
+        let shouldBeVisible = true;
+        
+        if (isFogActive && !isOwnedByCurrentPlayer) {
+            // If fog is active and unit belongs to opponent:
+            // Only show units from previous rounds (not current round)
+            shouldBeVisible = !isCurrentRound;
+        }
+        
+        // Update sprite visibility
+        this.sprite.setVisible(shouldBeVisible);
+        
+        // A unit can be repositioned if it was created in the current round 
+        // and is owned by the current player
+        const canReposition = isCurrentRound && isOwnedByCurrentPlayer;
+        this.highlightSprite.setVisible(canReposition && shouldBeVisible);
+        this.outlineSprite.setVisible(this.isSelected && shouldBeVisible);
+        
         // Force the highlight to match the unit's position exactly
-        if (canReposition && this.sprite) {
+        if (canReposition && shouldBeVisible) {
             this.highlightSprite.setPosition(this.sprite.x, this.sprite.y);
             this.updateHighlightColor();
         }

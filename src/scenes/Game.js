@@ -3,6 +3,7 @@ import { Button } from "../ui/components/Button";
 import { GridSystem } from "../systems/GridSystem";
 import { ResourceSystem } from "../systems/ResourceSystem";
 import { UnitSystem } from "../systems/UnitSystem";
+import { FogOfWarSystem } from "../systems/FogOfWarSystem";
 import { TestPanel } from "../ui/components/TestPanel";
 import { CountdownTimer } from "../ui/components/CountdownTimer";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
@@ -45,6 +46,7 @@ export class Game extends Scene {
     this.gridSystem = null;
     this.resourceSystem = null;
     this.unitSystem = null;
+    this.fogOfWarSystem = null;
     this.testPanel = null;
 
     // Game elements (initialized in create() and other methods)
@@ -78,6 +80,7 @@ export class Game extends Scene {
     this.gridSystem = new GridSystem(this);
     this.resourceSystem = new ResourceSystem(this);
     this.unitSystem = new UnitSystem(this);
+    this.fogOfWarSystem = new FogOfWarSystem(this);
 
     // Create game world container
     this.gameContainer = this.add.container(0, 0);
@@ -91,6 +94,9 @@ export class Game extends Scene {
 
     // Create grid
     this.gridSystem.create(this.gameContainer);
+    
+    // Create fog of war
+    this.fogOfWarSystem.create(this.gameContainer);
 
     // Create countdown timer and ready button
     this.createCountdownTimer();
@@ -302,6 +308,8 @@ export class Game extends Scene {
     switch (phase) {
       case PHASE.OPENING:
         this.currentPhase = phase;
+        // Disable fog of war during opening phase
+        this.fogOfWarSystem.toggle(false);
         const openingMenu = new OpeningPhaseMenu(this, {
           backgroundAlpha: 1.0 // Make background fully opaque
         });
@@ -309,16 +317,23 @@ export class Game extends Scene {
         break;
       case PHASE.POWERUP:
         this.currentPhase = phase;
+        // Enable fog of war during powerup phase
+        this.fogOfWarSystem.toggle(true);
         this.initializeNextRound();
         break;
       case PHASE.PLANNING:
         this.currentPhase = phase;
+        // Keep fog of war enabled during planning phase
         break;
       case PHASE.BATTLE:
         this.currentPhase = phase;
+        // Disable fog of war during battle phase
+        this.fogOfWarSystem.toggle(false);
         break;
       case PHASE.RESOLUTION:
         this.currentPhase = phase;
+        // Disable fog of war during resolution phase
+        this.fogOfWarSystem.toggle(false);
         break;
     }
   }
@@ -353,7 +368,10 @@ export class Game extends Scene {
     }
     this.resourceSystem.updateGoldDisplay();
     
-    // Update unit states
+    // Make sure fog of war is enabled
+    this.fogOfWarSystem.toggle(true);
+    
+    // Update unit states and visibility
     this.unitSystem.updateAllUnitHighlights();
     
     // Show powerup menu
@@ -366,6 +384,11 @@ export class Game extends Scene {
   switchPlayer() {
     this.currentPlayer = this.currentPlayer === PLAYERS.PLAYER_ONE ? PLAYERS.PLAYER_TWO : PLAYERS.PLAYER_ONE;
     this.changeCameraPerspective();
+    
+    // Update fog of war visibility for the new player
+    this.fogOfWarSystem.updateVisibility();
+    
+    // Update all unit visibility based on new player perspective and fog of war
     this.unitSystem.updateAllUnitHighlights();
     this.resourceSystem.updateGoldDisplay();
     if (this.unitSystem.selectedUnitGroup) {
