@@ -32,6 +32,7 @@ export const UI = {
 
 export const RESOURCES = {
     STARTING_GOLD: 250,
+    GOLD_PER_ROUND_INCREMENT: 200, // Gold increment per round
     DISPLAY: {
         FONT_SIZE: '24px',
         COLOR: '#FFD700',

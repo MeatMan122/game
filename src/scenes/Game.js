@@ -39,7 +39,7 @@ export class Game extends Scene {
     this.previewUnit = null;
     this.gridGraphics = null;
     this.unitButtons = new Map();
-    this.currentRound = 1;
+    this.currentRound = 0;
 
     // Systems (initialized in create())
     this.gridSystem = null;
@@ -337,9 +337,21 @@ export class Game extends Scene {
     const deploymentCenter = this.gridSystem.getDeploymentZoneCenter(this.currentPlayer);
     this.cameras.main.centerOn(deploymentCenter.x, deploymentCenter.y);
     
+    // Calculate gold reward for this round
+    // Formula: Starting Gold + (Increment * Sum of rounds)
+    // For round n, this is: Starting Gold + Increment * (1 + 2 + ... + n)
+    // Which simplifies to: Starting Gold + Increment * (n * (n + 1) / 2)
+    const totalRoundsBonus = (this.currentRound - 1) * RESOURCES.GOLD_PER_ROUND_INCREMENT;
+    const goldReward = RESOURCES.STARTING_GOLD + totalRoundsBonus;
+    
     // Update resources
-    const roundBonus = 200;
-    this.resourceSystem.gold += RESOURCES.STARTING_GOLD + (roundBonus * this.currentRound);
+    if(this.currentRound > 1){
+      this.resourceSystem.gold += goldReward;
+    }
+    else {
+      this.resourceSystem.gold = goldReward;
+    }
+    this.resourceSystem.updateGoldDisplay();
     
     // Update unit states
     this.unitSystem.updateAllUnitHighlights();
@@ -348,7 +360,7 @@ export class Game extends Scene {
     const powerupMenu = new PowerupMenu(this);
     powerupMenu.create();
     
-    console.log('Advanced to round:', this.currentRound);
+    console.log('Advanced to round:', this.currentRound, 'Gold reward:', goldReward);
   }
 
   switchPlayer() {
