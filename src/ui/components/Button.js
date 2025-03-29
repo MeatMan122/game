@@ -1,6 +1,46 @@
 import { DEPTH } from "../../configs/Constants";
 
+/**
+ * A customizable button component with text, background, and hover effects.
+ * Supports various styling options and interaction callbacks.
+ * 
+ * @class
+ * @property {Phaser.Scene} scene - The scene this button belongs to
+ * @property {Phaser.GameObjects.Container} container - Container for button elements
+ * @property {Phaser.GameObjects.Rectangle} background - Button background shape
+ * @property {Phaser.GameObjects.Text} buttonText - Button text display
+ * @property {number} width - Button width
+ * @property {number} height - Button height
+ * @property {number} x - Button x position
+ * @property {number} y - Button y position
+ * @property {string} text - Button text content
+ * @property {number} backgroundColor - Normal background color
+ * @property {number} hoverColor - Background color when hovered
+ * @property {Function} onClick - Click callback function
+ */
 export class Button {
+  /**
+   * Creates a new Button instance.
+   * @param {Phaser.Scene} scene - The scene this button belongs to
+   * @param {Object} config - Button configuration
+   * @param {number} [config.x=0] - X position
+   * @param {number} [config.y=0] - Y position
+   * @param {number} [config.width=100] - Button width
+   * @param {number} [config.height=40] - Button height
+   * @param {string} [config.text=''] - Button text
+   * @param {Object} [config.textStyle] - Text style configuration
+   * @param {number} [config.backgroundColor=0x666666] - Normal background color
+   * @param {number} [config.hoverColor=0x888888] - Background color when hovered
+   * @param {Function} [config.onClick] - Click callback function
+   * @param {number} [config.depth] - Rendering depth
+   * @param {number} [config.originX=0.5] - X origin point (0-1)
+   * @param {number} [config.originY=0.5] - Y origin point (0-1)
+   * @param {boolean} [config.isUnitStyle=false] - Whether to use unit-specific styling
+   * @param {string} [config.hoverText=''] - Text to show on hover
+   * @param {boolean} [config.showStrokeOnHover=false] - Whether to show stroke on hover
+   * @param {number} [config.strokeColor=0xffffff] - Stroke color
+   * @param {number} [config.strokeWidth=2] - Stroke width
+   */
   constructor(scene, config = {}) {
     this.scene = scene;
     
@@ -37,6 +77,10 @@ export class Button {
     this.create();
   }
   
+  /**
+   * Creates the button's visual elements.
+   * @private
+   */
   create() {
     // Create button background
     this.background = this.scene.add.rectangle(
@@ -144,6 +188,11 @@ export class Button {
     return this;
   }
   
+  /**
+   * Sets the button's text content.
+   * @param {string} text - New text content
+   * @returns {Button} This button instance for chaining
+   */
   setText(text) {
     this.text = text;
     if (this.buttonText) {
@@ -166,31 +215,59 @@ export class Button {
     return this;
   }
   
+  /**
+   * Sets the button's hover background color.
+   * @param {number} color - Color value in hex format
+   * @returns {Button} This button instance for chaining
+   */
   setHoverColor(color) {
     this.hoverColor = color;
     return this;
   }
   
+  /**
+   * Sets the button's click callback function.
+   * @param {Function} callback - Function to call when button is clicked
+   * @returns {Button} This button instance for chaining
+   */
   setCallback(callback) {
     this.onClick = callback;
     return this;
   }
   
+  /**
+   * Sets the button's visibility.
+   * @param {boolean} visible - Whether the button should be visible
+   * @returns {Button} This button instance for chaining
+   */
   setVisible(visible) {
     this.container.setVisible(visible);
     return this;
   }
   
+  /**
+   * Sets the button's transparency.
+   * @param {number} alpha - Transparency value (0-1)
+   * @returns {Button} This button instance for chaining
+   */
   setAlpha(alpha) {
     this.container.setAlpha(alpha);
     return this;
   }
   
+  /**
+   * Sets the button's depth in the scene.
+   * @param {number} depth - Depth value for rendering order
+   * @returns {Button} This button instance for chaining
+   */
   setDepth(depth) {
     this.container.setDepth(depth);
     return this;
   }
   
+  /**
+   * Removes the button and its elements from the scene.
+   */
   destroy() {
     this.container.destroy();
   }

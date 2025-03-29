@@ -1,6 +1,21 @@
 import { DEPTH, PHASE, POWERUP_MENU, TIMER } from '../../configs/Constants';
 
+/**
+ * A modal menu that displays powerup choices between rounds.
+ * Features an expandable/collapsible interface that can be shown/hidden,
+ * with smooth animations for transitions.
+ * 
+ * @class
+ * @property {import('../../scenes/Game').Game} scene - The scene this menu belongs to
+ * @property {Phaser.GameObjects.Container} container - Container for all menu elements
+ * @property {Phaser.GameObjects.Rectangle} modalBg - The background rectangle for the modal
+ * @property {Phaser.GameObjects.Container} showButton - The button that appears when menu is hidden
+ */
 export class PowerupMenu {
+    /**
+     * Creates a new PowerupMenu instance.
+     * @param {import('../../scenes/Game').Game} scene - The scene this menu belongs to
+     */
     constructor(scene) {
         this.scene = scene;
         this.container = null;
@@ -23,6 +38,10 @@ export class PowerupMenu {
         this.modalY = this.scene.scale.height * margin;
     }
 
+    /**
+     * Creates and initializes all menu elements.
+     * Sets up the modal background, container, and animates the menu in.
+     */
     create() {
         // Create opaque background for modal
         this.modalBg = this.scene.add.rectangle(
@@ -51,6 +70,10 @@ export class PowerupMenu {
         this.animateIn();
     }
 
+    /**
+     * Animates the menu sliding in from above the screen.
+     * @private
+     */
     animateIn() {
         // Start from above screen
         const startY = -this.modalHeight;
@@ -74,6 +97,11 @@ export class PowerupMenu {
         });
     }
 
+    /**
+     * Creates the powerup choice buttons and adds them to the container.
+     * Each button includes hover effects and selection handling.
+     * @private
+     */
     createPowerupChoices() {
         const choices = ['Powerup 1', 'Powerup 2', 'Powerup 3', 'Powerup 4'];
         const buttonWidth = POWERUP_MENU.CHOICE_BUTTON.WIDTH;
@@ -107,6 +135,10 @@ export class PowerupMenu {
         });
     }
 
+    /**
+     * Creates the hide button at the bottom of the menu.
+     * @private
+     */
     createHideButton() {
         const button = this.scene.add.rectangle(
             0, 100,
@@ -130,6 +162,11 @@ export class PowerupMenu {
         this.container.add([button, text]);
     }
 
+    /**
+     * Creates the show button that appears when the menu is hidden.
+     * Positioned relative to the timer.
+     * @private
+     */
     createShowButton() {
         // Position to the right of the timer
         const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
@@ -163,6 +200,10 @@ export class PowerupMenu {
         this.showButton.add([button, text]);
     }
 
+    /**
+     * Animates the menu collapsing into the show button position.
+     * Hides the menu elements and creates the show button when complete.
+     */
     hide() {
         // Get the final position of the show button
         const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
@@ -193,6 +234,10 @@ export class PowerupMenu {
         });
     }
 
+    /**
+     * Expands the menu from the show button position.
+     * Destroys the show button and displays the full menu with animation.
+     */
     show() {
         // Make elements visible
         this.modalBg.setVisible(true);
@@ -241,12 +286,19 @@ export class PowerupMenu {
         }
     }
 
+    /**
+     * Handles powerup selection, advances game phase, and destroys the menu.
+     * @param {string} choice - The selected powerup option
+     */
     handleSelection(choice) {
         console.log(`Selected powerup: ${choice}`);
         this.scene.handleRoundPhaseChange(PHASE.PLANNING);
         this.destroy();
     }
 
+    /**
+     * Cleans up all menu elements and removes them from the scene.
+     */
     destroy() {
         if (this.modalBg) this.modalBg.destroy();
         if (this.container) this.container.destroy();

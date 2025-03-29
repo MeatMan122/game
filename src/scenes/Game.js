@@ -10,8 +10,26 @@ import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER, PHASE, RESOUR
 import { OpeningPhaseMenu } from '../ui/components/OpeningPhaseMenu';
 import { PowerupMenu } from '../ui/components/PowerupMenu';
 
-/** @type {Phaser.Scene} */
+/**
+ * Main game scene that handles the core gameplay loop.
+ * Manages game state, systems, UI, and phase transitions.
+ * 
+ * @class
+ * @extends Phaser.Scene
+ * @property {boolean} isTestingMode - Whether the game is in testing mode
+ * @property {string} currentPlayer - The current active player
+ * @property {string} currentPhase - The current game phase
+ * @property {Phaser.GameObjects.Container} gameContainer - Container for game objects
+ * @property {GridSystem} gridSystem - System for managing the game grid
+ * @property {ResourceSystem} resourceSystem - System for managing player resources
+ * @property {UnitSystem} unitSystem - System for managing game units
+ * @property {TestPanel} testPanel - Panel for testing functionality
+ * @property {CountdownTimer} countdownTimer - Timer for round phases
+ */
 export class Game extends Scene {
+  /**
+   * Creates a new Game scene instance.
+   */
   constructor() {
     super("Game");
     this.isTestingMode = false; // Default value
@@ -42,11 +60,19 @@ export class Game extends Scene {
     this.countdownTimer = null;
   }
 
+  /**
+   * Initializes scene data from scene.start parameters.
+   * @param {Object} data - Scene initialization data
+   * @param {boolean} [data.isTestingMode=false] - Whether to enable testing mode
+   */
   init(data) {
     // Override default with data from scene.start
     this.isTestingMode = data.isTestingMode || false;
   }
 
+  /**
+   * Creates game systems, UI elements, and sets up input handlers.
+   */
   create() {
     // Initialize systems
     this.gridSystem = new GridSystem(this);
@@ -268,6 +294,10 @@ export class Game extends Scene {
     }, false);
   }
 
+  /**
+   * Handles transitions between game phases.
+   * @param {string} phase - The phase to transition to
+   */
   handleRoundPhaseChange(phase) {
     switch (phase) {
       case PHASE.OPENING:
@@ -293,6 +323,9 @@ export class Game extends Scene {
     }
   }
 
+  /**
+   * Initializes the next round, updating resources and UI.
+   */
   initializeNextRound() {
     this.currentRound++;
     
@@ -375,11 +408,18 @@ export class Game extends Scene {
   handlePlayerReady() {
     console.log('Called handlePlayerReady')
   }
+  /**
+   * Handles timer completion events.
+   */
   handleTimerComplete() {
     console.log('called handleTimerComplete')
     this.countdownTimer.reset();
   }
 
+  /**
+   * Starts the battle phase.
+   * To be implemented with battle mechanics.
+   */
   startBattle() {
     // This method will be implemented later to start the battle phase
     console.log('Both players are ready! Starting battle...');

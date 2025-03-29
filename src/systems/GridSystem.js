@@ -1,7 +1,22 @@
 import { UNIT_CONFIGS } from '../configs/UnitConfigs';
 import { GRID, TERRITORY, TERRITORY_COLORS, GRID_STYLE, DEPTH, ANIMATION, PLAYERS } from '../configs/Constants';
 
+/**
+ * System for managing the game grid, including territory zones and unit placement.
+ * Handles grid visualization, coordinate conversion, and territory validation.
+ * 
+ * @class
+ * @property {import('../scenes/Game').Game} scene - The scene this system belongs to
+ * @property {Phaser.GameObjects.Graphics} graphics - Graphics object for grid rendering
+ * @property {number} gridWidth - Width of the grid in cells
+ * @property {number} gridHeight - Height of the grid in cells
+ * @property {number} cellSize - Size of each grid cell in pixels
+ */
 export class GridSystem {
+    /**
+     * Creates a new GridSystem instance.
+     * @param {import('../scenes/Game').Game} scene - The scene this system belongs to
+     */
     constructor(scene) {
         this.scene = scene;
         this.gridGraphics = null;
@@ -9,9 +24,13 @@ export class GridSystem {
         this.deploymentZoneCenterY = null;
     }
 
-    create(gameContainer) {
+    /**
+     * Creates the grid graphics and adds them to the game container.
+     * @param {Phaser.GameObjects.Container} container - Container to add grid graphics to
+     */
+    create(container) {
         this.gridGraphics = this.scene.add.graphics();
-        gameContainer.add(this.gridGraphics);
+        container.add(this.gridGraphics);
         this.gridGraphics.setDepth(DEPTH.BACKGROUND);
 
         this.drawTerritories();
@@ -20,6 +39,10 @@ export class GridSystem {
         return this.gridGraphics;
     }
 
+    /**
+     * Gets the world size based on grid dimensions.
+     * @returns {{width: number, height: number}} World dimensions in pixels
+     */
     getWorldSize() {
         return {
             width: GRID.CELL_SIZE * GRID.WIDTH + GRID.PADDING.LEFT + GRID.PADDING.RIGHT,
@@ -34,6 +57,12 @@ export class GridSystem {
         return { snappedX, snappedY };
     }
 
+    /**
+     * Converts world coordinates to grid coordinates.
+     * @param {number} worldX - World X coordinate
+     * @param {number} worldY - World Y coordinate
+     * @returns {{gridX: number, gridY: number}} Grid coordinates
+     */
     worldToGrid(worldX, worldY) {
         const gridX = Math.floor((worldX - GRID.PADDING.LEFT) / GRID.CELL_SIZE);
         const gridY = Math.floor((worldY - GRID.PADDING.TOP) / GRID.CELL_SIZE);
@@ -41,6 +70,12 @@ export class GridSystem {
         return { gridX, gridY };
     }
 
+    /**
+     * Gets grid position from pointer coordinates.
+     * @param {Phaser.Input.Pointer} pointer - Input pointer
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - Camera for coordinate conversion
+     * @returns {{snappedX: number, snappedY: number, gridX: number, gridY: number}} Grid and world positions
+     */
     getGridPositionFromPointer(pointer, camera) {
         const worldPoint = camera.getWorldPoint(pointer.x, pointer.y);
         const { snappedX, snappedY } = this.snapToGrid(worldPoint.x, worldPoint.y);
@@ -168,6 +203,11 @@ export class GridSystem {
         this.playerTwoDeploymentCenterY = playerTwoDeploymentY + (deploymentZoneWidth / 2);
     }
 
+    /**
+     * Gets the center position of a player's deployment zone.
+     * @param {string} player - Player identifier
+     * @returns {{x: number, y: number}} Center position in world coordinates
+     */
     getDeploymentZoneCenter(player) {
         if (player === PLAYERS.PLAYER_ONE) {
             return { x: this.playerDeploymentCenterX, y: this.playerDeploymentCenterY };
@@ -284,5 +324,61 @@ export class GridSystem {
         }
 
         return null;
+    }
+
+    /**
+     * Checks if a grid position is within a player's territory.
+     * @param {number} gridX - Grid X coordinate
+     * @param {number} gridY - Grid Y coordinate
+     * @param {string} player - Player identifier
+     * @returns {boolean} Whether the position is in the player's territory
+     */
+    isInPlayerTerritory(gridX, gridY, player) {
+        const territory = this.getTerritoryAt(gridY);
+        return territory === player;
+    }
+
+    /**
+     * Checks if a grid position is within a player's deployment zone.
+     * @param {number} gridX - Grid X coordinate
+     * @param {number} gridY - Grid Y coordinate
+     * @param {string} player - Player identifier
+     * @returns {boolean} Whether the position is in the deployment zone
+     */
+    isInDeploymentZone(gridX, gridY, player) {
+        const deploymentZone = this.getDeploymentZoneCenter(player);
+        if (!deploymentZone) {
+            return false;
+        }
+        const { x, y } = deploymentZone;
+        const deploymentZoneWidth = TERRITORY.DEPLOYMENT_ZONE.SIZE * GRID.CELL_SIZE;
+        const deploymentZoneX = GRID.PADDING.LEFT + (TERRITORY.DEPLOYMENT_ZONE.PADDING * GRID.CELL_SIZE);
+        const deploymentZoneY = GRID.PADDING.TOP + (TERRITORY.DEPLOYMENT_ZONE.PADDING * GRID.CELL_SIZE);
+        return (
+            gridX >= deploymentZoneX && gridX < deploymentZoneX + deploymentZoneWidth &&
+            gridY >= deploymentZoneY && gridY < deploymentZoneY + deploymentZoneWidth
+        );
+    }
+
+    /**
+     * Draws the grid lines and territory zones.
+     * @private
+     */
+    drawGrid() {
+        this.gridGraphics.lineStyle(GRID_STYLE.LINE_WIDTH, GRID_STYLE.LINE_COLOR, GRID_STYLE.LINE_ALPHA);
+
+        // Draw vertical lines
+        for (let x = 0; x <= GRID.WIDTH * GRID.CELL_SIZE; x += GRID.CELL_SIZE) {
+            this.gridGraphics.moveTo(x + GRID.PADDING.LEFT, GRID.PADDING.TOP);
+            this.gridGraphics.lineTo(x + GRID.PADDING.LEFT, GRID.HEIGHT * GRID.CELL_SIZE + GRID.PADDING.TOP);
+        }
+
+        // Draw horizontal lines
+        for (let y = 0; y <= GRID.HEIGHT * GRID.CELL_SIZE; y += GRID.CELL_SIZE) {
+            this.gridGraphics.moveTo(GRID.PADDING.LEFT, y + GRID.PADDING.TOP);
+            this.gridGraphics.lineTo(GRID.WIDTH * GRID.CELL_SIZE + GRID.PADDING.LEFT, y + GRID.PADDING.TOP);
+        }
+
+        this.gridGraphics.strokePath();
     }
 } 

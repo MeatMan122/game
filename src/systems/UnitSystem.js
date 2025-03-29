@@ -3,8 +3,27 @@ import { GRID, UNIT, UI } from "../configs/Constants";
 import { Warrior } from "../units/Warrior";
 import { Archer } from "../units/Archer";
 import { UnitGroup } from "../units/UnitGroup";
+import { Button } from "../ui/components/Button";
+import { Unit } from "../units/Unit";
 
+/**
+ * System for managing game units, including creation, placement, and group management.
+ * Handles unit selection, repositioning, and interaction with the grid system.
+ * 
+ * @class
+ * @property {import('../scenes/Game').Game} scene - The scene this system belongs to
+ * @property {UnitGroup} selectedUnitGroup - Currently selected group of units
+ * @property {Map<string, Button>} unitButtons - Map of unit type to button
+ * @property {number} nextUnitId - Counter for generating unique unit IDs
+ * @property {Map<number, Unit>} unitsById - Map of unit ID to unit instance
+ * @property {number} nextGroupId - Counter for generating unique group IDs
+ * @property {Map<number, number[]>} unitGroups - Map of group ID to array of unit IDs
+ */
 export class UnitSystem {
+    /**
+     * Creates a new UnitSystem instance.
+     * @param {import('../scenes/Game').Game} scene - The scene this system belongs to
+     */
     constructor(scene) {
         this.scene = scene;
         // For tracking existing units/groups selected on the board
@@ -86,15 +105,31 @@ export class UnitSystem {
         }
     }
 
+    /**
+     * Registers a button for a specific unit type.
+     * @param {string} unitType - Type of unit the button creates
+     * @param {Button} button - Button instance to register
+     */
     registerButton(unitType, button) {
         this.unitButtons.set(unitType, button);
     }
 
+    /**
+     * Gets the number of units to create per placement.
+     * @param {string} unitType - Type of unit to check
+     * @returns {number} Number of units per placement
+     * @private
+     */
     getUnitsPerPlacement(unitType) {
         return UNIT_CONFIGS[unitType].unitsPerPlacement;
     }
 
-    // Helper to create the appropriate unit type
+    /**
+     * Creates a new unit instance of the specified type.
+     * @param {string} unitType - Type of unit to create
+     * @returns {Unit|null} The created unit instance, or null if type is invalid
+     * @private
+     */
     createUnitInstance(unitType) {
         let unit = null;
         switch (unitType) {
@@ -116,7 +151,11 @@ export class UnitSystem {
         return unit;
     }
     
-    // Helper to check if the current player can interact with a unit/group
+    /**
+     * Checks if a player can interact with a unit.
+     * @param {UnitGroup} group - The group to check
+     * @returns {boolean} Whether the player can interact with the unit
+     */
     canPlayerInteractWithUnit(group) {
         if (!group) return false;
         
@@ -124,7 +163,10 @@ export class UnitSystem {
         return canInteract;
     }
     
-    // Select a unit group
+    /**
+     * Selects a group of units and updates visual feedback.
+     * @param {UnitGroup} group - The group to select
+     */
     selectUnitGroup(group) {
         // Don't allow selecting units owned by the opponent
         if (!this.canPlayerInteractWithUnit(group)) {
@@ -150,7 +192,10 @@ export class UnitSystem {
         }
     }
     
-    // Start repositioning a unit group
+    /**
+     * Starts repositioning a group of units.
+     * @param {UnitGroup} group - The group to reposition
+     */
     startRepositioningGroup(group) {
         // Verify that the group exists, can be repositioned, and belongs to the current player
         if (!group || !group.canReposition || !this.canPlayerInteractWithUnit(group)) {
@@ -177,6 +222,11 @@ export class UnitSystem {
         return this.unitsById.get(id);
     }
 
+    /**
+     * Creates a group of units of the specified type.
+     * @param {string} unitType - Type of units to create
+     * @returns {Unit[]} Array of created units
+     */
     createUnits(unitType) {
         const units = [];
         const unitsPerPlacement = this.getUnitsPerPlacement(unitType);
@@ -251,6 +301,12 @@ export class UnitSystem {
             })
     }
 
+    /**
+     * Gets a unit group at the specified grid position.
+     * @param {number} gridX - Grid X coordinate
+     * @param {number} gridY - Grid Y coordinate
+     * @returns {UnitGroup|null} The unit group at the position, or null if none found
+     */
     getUnitGroup(gridX, gridY) {
         const unit = Array.from(this.unitsById.values())
             .find(unit => unit.gridX === gridX && unit.gridY === gridY);
@@ -273,7 +329,11 @@ export class UnitSystem {
         });
     }
 
-    // Group management methods
+    /**
+     * Creates a new unit group and assigns units to it.
+     * @param {Unit[]} units - Units to add to the group
+     * @returns {number} ID of the created group
+     */
     addUnitGroup(units) {
         const groupId = this.nextGroupId++;
         const unitIds = [];
@@ -303,6 +363,9 @@ export class UnitSystem {
         return true;
     }
 
+    /**
+     * Updates highlight states for all units.
+     */
     updateAllUnitHighlights() {
         // Update highlights for all units
         Array.from(this.unitsById.values()).forEach(unit => {

@@ -1,6 +1,30 @@
 import { GRID, DEPTH, TERRITORY_COLORS, UNIT } from '../configs/Constants';
 
+/**
+ * Represents a game unit that can be placed on the grid and manipulated by players.
+ * Handles unit visualization, interaction, positioning, and state management.
+ * 
+ * @class
+ * @property {import('../scenes/Game').Game} scene - The scene this unit belongs to
+ * @property {string} unitType - The type of unit (e.g., 'warrior', 'archer')
+ * @property {number} id - Unique identifier assigned by UnitSystem
+ * @property {number} groupId - Identifier for units placed together
+ * @property {Phaser.GameObjects.Sprite} sprite - The unit's main sprite
+ * @property {boolean} isVertical - Whether the unit is oriented vertically
+ * @property {number} gridX - Current X position on the grid
+ * @property {number} gridY - Current Y position on the grid
+ * @property {number} roundCreated - The round number when this unit was created
+ * @property {boolean} isRepositioning - Whether the unit is being repositioned
+ * @property {boolean} isSelected - Whether the unit is currently selected
+ * @property {boolean} isInvalidPosition - Whether the unit is in an invalid position
+ * @property {string} owner - The player who owns this unit
+ */
 export class Unit {
+    /**
+     * Creates a new Unit instance.
+     * @param {import('../scenes/Game').Game} scene - The scene this unit belongs to
+     * @param {string} unitType - The type of unit to create
+     */
     constructor(scene, unitType) {
         this.scene = scene;
         this.unitType = unitType;
@@ -20,6 +44,11 @@ export class Unit {
         this.createSprite();
     }
 
+    /**
+     * Creates the unit's visual components including sprite, highlight, and outline.
+     * Sets up interactive elements and event handlers.
+     * @private
+     */
     createSprite() {
         // Create a highlight background (will be visible only when unit can be repositioned)
         // scene.add.rectangle(x, y, width, height, fillColor, fillAlpha)
@@ -52,6 +81,11 @@ export class Unit {
         this.updateHighlight();
     }
 
+    /**
+     * Sets up event handlers for unit interaction.
+     * Handles clicks, double-clicks, and repositioning events.
+     * @private
+     */
     setupEventHandlers() {
         // Handle click events on this unit
         this.sprite.on('pointerdown', (pointer) => {
@@ -88,6 +122,12 @@ export class Unit {
         });
     }
 
+    /**
+     * Handles single-click events on the unit.
+     * Manages unit selection and placement during repositioning.
+     * @param {Phaser.Input.Pointer} pointer - The pointer that triggered the event
+     * @private
+     */
     handleSingleClick(pointer) {
         const unitSystem = this.scene.unitSystem;
 
@@ -126,6 +166,12 @@ export class Unit {
         unitSystem.selectUnitGroup(group);
     }
 
+    /**
+     * Handles double-click events on the unit.
+     * Initiates unit repositioning if allowed.
+     * @param {Phaser.Input.Pointer} pointer - The pointer that triggered the event
+     * @private
+     */
     handleDoubleClick(pointer) {
         const unitSystem = this.scene.unitSystem;
         const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
@@ -135,6 +181,11 @@ export class Unit {
         }
     }
 
+    /**
+     * Sets the unit's position in world coordinates and updates grid position.
+     * @param {number} x - World X coordinate
+     * @param {number} y - World Y coordinate
+     */
     setPosition(x, y) {
         if (this.sprite) {
             this.sprite.setPosition(x, y);
@@ -151,12 +202,20 @@ export class Unit {
         }
     }
 
+    /**
+     * Sets the transparency of the unit's sprite.
+     * @param {number} alpha - Transparency value (0-1)
+     */
     setAlpha(alpha) {
         if (this.sprite) {
             this.sprite.setAlpha(alpha);
         }
     }
 
+    /**
+     * Sets the unit's selected state and updates visual feedback.
+     * @param {boolean} selected - Whether the unit is selected
+     */
     setSelected(selected) {
         this.isSelected = selected;
         this.updateHighlightColor();
@@ -170,19 +229,29 @@ export class Unit {
         this.outlineSprite.setVisible(selected);
     }
 
+    /**
+     * Sets the unit's repositioning state and updates visual feedback.
+     * @param {boolean} repositioning - Whether the unit is being repositioned
+     */
     setRepositioning(repositioning) {
         this.isRepositioning = repositioning;
         this.setAlpha(repositioning ? 0.5 : 1.0);
         this.updateHighlightColor();
     }
 
-    // New method to set invalid position state
+    /**
+     * Sets whether the unit is in an invalid position and updates visual feedback.
+     * @param {boolean} invalid - Whether the position is invalid
+     */
     setInvalidPosition(invalid) {
         this.isInvalidPosition = invalid;
         this.updateHighlightColor();
     }
 
-    // New method to update highlight color based on all states
+    /**
+     * Updates the highlight color based on unit state (selected, repositioning, invalid).
+     * @private
+     */
     updateHighlightColor() {
         if (!this.highlightSprite) return;
 
@@ -204,6 +273,9 @@ export class Unit {
         this.highlightSprite.setFillStyle(color, alpha);
     }
 
+    /**
+     * Cleans up and removes the unit's visual components from the scene.
+     */
     destroy() {
         if (this.highlightSprite) {
             this.highlightSprite.destroy();
@@ -219,7 +291,10 @@ export class Unit {
         }
     }
 
-    // Helper to get grid position
+    /**
+     * Gets the unit's current grid position.
+     * @returns {{x: number, y: number}} The grid coordinates
+     */
     getGridPosition() {
         if (this.gridX !== null && this.gridY !== null) {
             return { gridX: this.gridX, gridY: this.gridY };
@@ -231,19 +306,30 @@ export class Unit {
         return pos;
     }
 
-    // Update grid position
+    /**
+     * Updates the unit's stored grid position.
+     * @param {number} gridX - New X position on grid
+     * @param {number} gridY - New Y position on grid
+     */
     updateGridPosition(gridX, gridY) {
         this.gridX = gridX;
         this.gridY = gridY;
     }
 
+    /**
+     * Toggles the unit's orientation between vertical and horizontal.
+     * Only works when unit is being repositioned.
+     */
     toggleRotation() {
         if (this.isRepositioning) {
             this.isVertical = !this.isVertical;
         }
     }
 
-    // Update the highlight visibility based on whether the unit can be repositioned
+    /**
+     * Updates the visibility and state of the unit's highlight based on current conditions.
+     * @private
+     */
     updateHighlight() {
         // A unit can be repositioned if it was created in the current round
         const canReposition = this.roundCreated === this.scene.currentRound;

@@ -1,7 +1,29 @@
 import { TIMER, DEPTH, PLAYERS } from "../../configs/Constants";
 import { Button } from "./Button";
 
+/**
+ * A countdown timer with ready button functionality.
+ * Used to manage round timing and player readiness.
+ * 
+ * @class
+ * @property {import('../../scenes/Game').Game} scene - The scene this timer belongs to
+ * @property {number} timeRemaining - Current time remaining in seconds
+ * @property {Phaser.Time.TimerEvent} timerEvent - Timer event for countdown
+ * @property {Phaser.GameObjects.Text} timerText - Text display for countdown
+ * @property {Button} readyButton - Button for player ready state
+ * @property {boolean} isReady - Whether the player is ready
+ */
 export class CountdownTimer {
+  /**
+   * Creates a new CountdownTimer instance.
+   * @param {import('../../scenes/Game').Game} scene - The scene this timer belongs to
+   * @param {Object} [config={}] - Timer configuration
+   * @param {number} [config.duration=TIMER.DEFAULT_DURATION] - Initial duration in seconds
+   * @param {Function} [config.onComplete] - Callback when timer completes
+   * @param {Function} [config.onReady] - Callback when player clicks ready
+   * @param {Function} [config.onTimeComplete] - Callback when time runs out
+   * @param {Function} [config.onBothPlayersReady] - Callback when both players are ready
+   */
   constructor(scene, config = {}) {
     this.scene = scene;
     this.timeRemaining = config.duration || TIMER.DEFAULT_DURATION;
@@ -25,6 +47,10 @@ export class CountdownTimer {
     this.create();
   }
 
+  /**
+   * Creates the timer's visual elements and ready button.
+   * @private
+   */
   create() {
     // Create timer text
     this.timerText = this.scene.add.text(
@@ -107,7 +133,11 @@ export class CountdownTimer {
     this.container.add([this.player1Indicator, this.player2Indicator]);
   }
 
-  start() {
+  /**
+   * Starts the countdown timer.
+   * @param {number} [duration=TIMER.DEFAULT_DURATION] - Duration in seconds
+   */
+  start(duration = TIMER.DEFAULT_DURATION) {
     // Clear any existing timer
     if (this.timerEvent) {
       this.timerEvent.remove();
@@ -122,6 +152,9 @@ export class CountdownTimer {
     });
   }
 
+  /**
+   * Stops the countdown timer.
+   */
   stop() {
     if (this.timerEvent) {
       this.timerEvent.remove();
@@ -129,6 +162,10 @@ export class CountdownTimer {
     }
   }
 
+  /**
+   * Resets the timer to initial state.
+   * @param {number} [duration=TIMER.DEFAULT_DURATION] - New duration in seconds
+   */
   reset(duration = TIMER.DEFAULT_DURATION) {
     this.stop();
     this.timeRemaining = duration;
@@ -136,6 +173,9 @@ export class CountdownTimer {
     this.start();
   }
 
+  /**
+   * Resets the ready button state.
+   */
   resetReadyStatus() {
     this.player1Ready = false;
     this.player2Ready = false;
@@ -143,6 +183,10 @@ export class CountdownTimer {
     this.player2Indicator.fillColor = 0x777777;
   }
 
+  /**
+   * Updates the timer display and checks for completion.
+   * @private
+   */
   updateTimer() {
     this.timeRemaining--;
 
@@ -155,12 +199,22 @@ export class CountdownTimer {
     this.timerText.setText(this.formatTime(this.timeRemaining));
   }
 
+  /**
+   * Formats seconds into MM:SS display format.
+   * @param {number} seconds - Time in seconds
+   * @returns {string} Formatted time string
+   * @private
+   */
   formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
+  /**
+   * Handles ready button click event.
+   * @private
+   */
   handleReadyButtonClick() {
     // Determine which player clicked ready based on the current player in the game
     const currentPlayer = this.scene.currentPlayer;

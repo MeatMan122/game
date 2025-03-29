@@ -1,6 +1,25 @@
 import { DEPTH, OPENING_MENU, PHASE } from '../../configs/Constants';
 
+/**
+ * Full-screen menu displayed at the start of the game for initial choices.
+ * Allows players to select their starting general/configuration.
+ * 
+ * @class
+ * @property {import('../../scenes/Game').Game} scene - The scene this menu belongs to
+ * @property {Object} config - Menu configuration options
+ * @property {number} config.backgroundColor - Background color
+ * @property {number} config.backgroundAlpha - Background transparency
+ * @property {Phaser.GameObjects.Rectangle} modalBg - Full-screen background
+ * @property {Phaser.GameObjects.Container} container - Container for menu elements
+ */
 export class OpeningPhaseMenu {
+    /**
+     * Creates a new OpeningPhaseMenu instance.
+     * @param {import('../../scenes/Game').Game} scene - The scene this menu belongs to
+     * @param {Object} [config={}] - Menu configuration
+     * @param {number} [config.backgroundColor=0x000000] - Background color
+     * @param {number} [config.backgroundAlpha=0.8] - Background transparency
+     */
     constructor(scene, config = {}) {
         this.scene = scene;
         this.container = null;
@@ -12,6 +31,9 @@ export class OpeningPhaseMenu {
         };
     }
 
+    /**
+     * Creates and initializes all menu elements.
+     */
     create() {
         // Create modal background
         this.modalBg = this.scene.add.rectangle(
@@ -31,6 +53,10 @@ export class OpeningPhaseMenu {
         this.createChoiceButtons();
     }
 
+    /**
+     * Creates the choice buttons and adds them to the container.
+     * @private
+     */
     createChoiceButtons() {
         const choices = ['Choice 1', 'Choice 2', 'Choice 3', 'Choice 4'];
         const buttonWidth = OPENING_MENU.CHOICE_BUTTON.WIDTH;
@@ -96,6 +122,11 @@ export class OpeningPhaseMenu {
         });
     }
 
+    /**
+     * Handles choice selection and advances to the next phase.
+     * @param {string} choice - The selected choice
+     * @private
+     */
     handleSelection(choice) {
         // TODO: Store selection in game state when implemented
         console.log(`Selected choice: ${choice}`);
@@ -103,6 +134,9 @@ export class OpeningPhaseMenu {
         this.destroy();
     }
 
+    /**
+     * Removes the menu and its elements from the scene.
+     */
     destroy() {
         if (this.modalBg) this.modalBg.destroy();
         if (this.container) this.container.destroy();

@@ -1,10 +1,22 @@
 import { RESOURCES } from './Constants';
 
+/**
+ * Configuration constants for unit types.
+ * @type {Object.<string, string>}
+ */
 export const UNIT_TYPES = {
     ARCHER: 'archer',
     WARRIOR: 'warrior'
 };
 
+/**
+ * Detailed configuration for each unit type.
+ * @type {Object.<string, {
+ *   cost: number,
+ *   unitsPerPlacement: number,
+ *   color: number
+ * }>}
+ */
 export const UNIT_CONFIGS = {
     [UNIT_TYPES.ARCHER]: {
         cost: 50,
@@ -18,25 +30,63 @@ export const UNIT_CONFIGS = {
     }
 };
 
+/**
+ * Static class providing utility methods for accessing unit configurations.
+ * @class
+ */
 export class UnitConfigs {
+    /**
+     * Map of all unit configurations.
+     * @type {Object.<string, Object>}
+     * @static
+     */
     static CONFIGS = UNIT_CONFIGS;
 
+    /**
+     * Gets the configuration for a specific unit type.
+     * @param {string} unitType - Type of unit to get config for
+     * @returns {Object} Unit configuration
+     * @static
+     */
     static getConfig(unitType) {
         return this.CONFIGS[unitType];
     }
 
+    /**
+     * Gets the cost for a specific unit type.
+     * @param {string} unitType - Type of unit to get cost for
+     * @returns {number} Unit cost
+     * @static
+     */
     static getCost(unitType) {
         return this.CONFIGS[unitType].cost;
     }
 
+    /**
+     * Gets the number of units created per placement for a unit type.
+     * @param {string} unitType - Type of unit to check
+     * @returns {number} Units per placement
+     * @static
+     */
     static getUnitsPerPlacement(unitType) {
         return this.CONFIGS[unitType].unitsPerPlacement;
     }
 
+    /**
+     * Gets the color for a specific unit type.
+     * @param {string} unitType - Type of unit to get color for
+     * @returns {number} Unit color in hex format
+     * @static
+     */
     static getColor(unitType) {
         return this.CONFIGS[unitType].color;
     }
 
+    /**
+     * Gets a list of all available unit types.
+     * @returns {string[]} Array of unit type identifiers
+     * @static
+     */
     static getAllUnitTypes() {
         return Object.keys(this.CONFIGS);
     }
