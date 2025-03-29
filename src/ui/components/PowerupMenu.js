@@ -193,6 +193,7 @@ export class PowerupMenu {
         });
         
         this.showButton = showButtonInstance.container;
+
     }
 
     /**
@@ -205,6 +206,10 @@ export class PowerupMenu {
         const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
         const buttonY = TIMER.POSITION.Y;
 
+        // Hack to prevent show button from popping in
+        this.scene.time.delayedCall(200, () => {
+            this.createShowButton();
+        });
         // Move container to the show button position
         this.scene.tweens.add({
             targets: [this.container],
@@ -216,7 +221,6 @@ export class PowerupMenu {
             ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE,
             onComplete: () => {
                 this.container.setVisible(false);
-                this.createShowButton();
             }
         });
     }
