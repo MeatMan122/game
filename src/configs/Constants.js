@@ -116,7 +116,8 @@ export const DEPTH = {
     UI_BACKGROUND: 95,
     UI_ELEMENTS: 100,
     UI_FOREGROUND: 105,
-    TOOLTIP: 110
+    TOOLTIP: 110,
+    UI_FULLSCREEN: 115
 }; 
 
 export const PLAYERS = {
@@ -151,4 +152,21 @@ export const PHASE = {
     PLANNING: "Planning",
     BATTLE: "Battle",
     RESOLUTION: "Resolution",
-}
+};
+
+export const OPENING_MENU = {
+    BACKGROUND: {
+        COLOR: 0x000000,
+        ALPHA: 1.0
+    },
+    CHOICE_BUTTON: {
+        WIDTH: 200,
+        HEIGHT: 300,
+        COLORS: [0x4CAF50, 0x2196F3, 0xFFC107, 0xE91E63],
+        SPACING: 50,
+        TEXT: {
+            COLOR: '#ffffff',
+            FONT_SIZE: '24px'
+        }
+    }
+};

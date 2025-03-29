@@ -7,6 +7,7 @@ import { TestPanel } from "../ui/components/TestPanel";
 import { CountdownTimer } from "../ui/components/CountdownTimer";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
 import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER, PHASE } from "../configs/Constants";
+import { OpeningPhaseMenu } from '../ui/components/OpeningPhaseMenu';
 
 /** @type {Phaser.Scene} */
 export class Game extends Scene {
@@ -14,6 +15,7 @@ export class Game extends Scene {
     super("Game");
     this.isTestingMode = false; // Default value
     this.currentPlayer = PLAYERS.PLAYER_ONE; // Track current player
+    this.currentPhase = PHASE.OPENING;
     // Properties initialized with values
     this.previewUnit = null;
     this.gridGraphics = null;
@@ -69,19 +71,23 @@ export class Game extends Scene {
     // Create UI
     this.createUnitSelectionMenu();
 
-    // Create test panel if in testing mode
-    if (this.isTestingMode) {
-      this.testPanel = new TestPanel(this);
-      // Tell main camera to ignore TestPanel's container
-      this.cameras.main.ignore(this.testPanel.container);
-    }
-
+    
     // Disable browser context menu on right click
     this.disableBrowserContextMenu();
-
+    
     // Set up input handlers
     this.setupInputHandlers();
-    this.handleRoundPhaseChange(PHASE.OPENING);
+      // Create test panel if in testing mode
+      if (this.isTestingMode) {
+        this.testPanel = new TestPanel(this);
+        // Tell main camera to ignore TestPanel's container
+        this.cameras.main.ignore(this.testPanel.container);
+        //DTB: THIS SHOULD BE THE OPENING PHASE IN A TRUE TEST, BUT WE WANT TO SEE IT ALL.
+        // this.handleRoundPhaseChange(PHASE.PLANNING);
+        this.handleRoundPhaseChange(PHASE.OPENING);
+      } else {
+        this.handleRoundPhaseChange(PHASE.OPENING);
+      }
   }
 
   update() {
@@ -264,19 +270,27 @@ export class Game extends Scene {
   handleRoundPhaseChange(phase) {
     switch (phase) {
       case PHASE.OPENING:
+        this.currentPhase = phase;
+        const openingMenu = new OpeningPhaseMenu(this, {
+          backgroundAlpha: 1.0 // Make background fully opaque
+        });
+        openingMenu.create();
         break;
       case PHASE.POWERUP:
+        this.currentPhase = phase;
         this.initializeNextRound();
         break;
       case PHASE.PLANNING:
+        this.currentPhase = phase;
         break;
       case PHASE.BATTLE:
+        this.currentPhase = phase;
         break;
       case PHASE.RESOLUTION:
+        this.currentPhase = phase;
         break;
     }
   }
-
 
   initializeNextRound() {
     this.currentRound++;
