@@ -34,6 +34,8 @@
 - Disable fog of war
 - Minimize UI
 - Enable/Begin combat
+- Clear all unit highlighting
+  - selection still possible but buttons disabled
 - Change ready button to Speed Up button
   - When both players agree, the gamespeed increases to 2x
 - On unit death, check unit's surviving on both teams

@@ -307,6 +307,7 @@ export class Game extends Scene {
   handleRoundPhaseChange(phase) {
     switch (phase) {
       case PHASE.OPENING:
+        console.log('Current Phase: ', this.currentPhase)
         this.currentPhase = phase;
         // Disable fog of war during opening phase
         this.fogOfWarSystem.toggle(false);
@@ -316,21 +317,26 @@ export class Game extends Scene {
         openingMenu.create();
         break;
       case PHASE.POWERUP:
+        console.log('Current Phase: ', this.currentPhase)
         this.currentPhase = phase;
         // Enable fog of war during powerup phase
         this.fogOfWarSystem.toggle(true);
         this.initializeNextRound();
         break;
       case PHASE.PLANNING:
+        console.log('Current Phase: ', this.currentPhase)
         this.currentPhase = phase;
         // Keep fog of war enabled during planning phase
         break;
       case PHASE.BATTLE:
+        console.log('Current Phase: ', this.currentPhase)
         this.currentPhase = phase;
         // Disable fog of war during battle phase
         this.fogOfWarSystem.toggle(false);
+       
         break;
       case PHASE.RESOLUTION:
+        console.log('Current Phase: ', this.currentPhase)
         this.currentPhase = phase;
         // Disable fog of war during resolution phase
         this.fogOfWarSystem.toggle(false);
@@ -353,18 +359,7 @@ export class Game extends Scene {
     this.cameras.main.centerOn(deploymentCenter.x, deploymentCenter.y);
     
     // Calculate gold reward for this round
-    // Formula: Starting Gold + (Increment * Sum of rounds)
-    // For round n, this is: Starting Gold + Increment * (1 + 2 + ... + n)
-    // Which simplifies to: Starting Gold + Increment * (n * (n + 1) / 2)
-    const totalRoundsBonus = (this.currentRound - 1) * RESOURCES.GOLD_PER_ROUND_INCREMENT;
-    const goldReward = RESOURCES.STARTING_GOLD + totalRoundsBonus;
-    
-    // Update resources for ALL players, not just the current one
-    if(this.currentRound > 1) {
-      this.resourceSystem.addGoldToAllPlayers(goldReward);
-    } else {
-      this.resourceSystem.setGoldForAllPlayers(goldReward);
-    }
+    this.calculateGoldReward();
     
     // Make sure fog of war is enabled
     this.fogOfWarSystem.toggle(true);
@@ -376,8 +371,18 @@ export class Game extends Scene {
     const powerupMenu = new PowerupMenu(this);
     powerupMenu.create();
     this.cameras.main.ignore(powerupMenu.container);
+  }
+
+  calculateGoldReward(){
+    const totalRoundsBonus = (this.currentRound - 1) * RESOURCES.GOLD_PER_ROUND_INCREMENT;
+    const goldReward = RESOURCES.STARTING_GOLD + totalRoundsBonus;
     
-    console.log('Advanced to round:', this.currentRound, 'Gold reward:', goldReward);
+    // Update resources for ALL players, not just the current one
+    if(this.currentRound > 1) {
+      this.resourceSystem.addGoldToAllPlayers(goldReward);
+    } else {
+      this.resourceSystem.setGoldForAllPlayers(goldReward);
+    }
   }
 
   switchPlayer() {
@@ -448,6 +453,21 @@ export class Game extends Scene {
   handleTimerComplete() {
     console.log('called handleTimerComplete')
     this.countdownTimer.reset();
+    if (this.currentPhase == PHASE.PLANNING) {
+      this.handleRoundPhaseChange(PHASE.BATTLE);
+    }
+    else if (this.currentPhase == PHASE.BATTLE && !this.thereIsAWinner()){
+      this.handleRoundPhaseChange(PHASE.POWERUP);
+    }
+    else if (this.currentPhase == PHASE.BATTLE && this.thereIsAWinner()) {
+      this.handleRoundPhaseChange(PHASE.RESOLUTION);
+    }
+  }
+
+  thereIsAWinner(){
+    // Will check state of player health to see if a player has <= 0 health
+    // if they do, then the other player is declared the winner;
+    return false;
   }
 
   /**
