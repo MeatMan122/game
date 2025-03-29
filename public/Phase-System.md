@@ -20,7 +20,8 @@
 - Spawn units
 - Apply powerup
 - Advance Phase
-- Phase 2 - Planning
+
+## Phase 2 - Planning
 - Unit positioning enabled
 
 

@@ -6,8 +6,9 @@ import { UnitSystem } from "../systems/UnitSystem";
 import { TestPanel } from "../ui/components/TestPanel";
 import { CountdownTimer } from "../ui/components/CountdownTimer";
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER, PHASE } from "../configs/Constants";
+import { GRID, UI, TERRITORY, GAME, CAMERA, DEPTH, PLAYERS, TIMER, PHASE, RESOURCES } from "../configs/Constants";
 import { OpeningPhaseMenu } from '../ui/components/OpeningPhaseMenu';
+import { PowerupMenu } from '../ui/components/PowerupMenu';
 
 /** @type {Phaser.Scene} */
 export class Game extends Scene {
@@ -294,11 +295,27 @@ export class Game extends Scene {
 
   initializeNextRound() {
     this.currentRound++;
+    
+    // Reset UI and view
     this.countdownTimer.resetReadyStatus();
     this.countdownTimer.reset();
+    
+    // Center on deployment zone
+    const deploymentCenter = this.gridSystem.getDeploymentZoneCenter(this.currentPlayer);
+    this.cameras.main.centerOn(deploymentCenter.x, deploymentCenter.y);
+    
+    // Update resources
+    const roundBonus = 200;
+    this.resourceSystem.gold += RESOURCES.STARTING_GOLD + (roundBonus * this.currentRound);
+    
+    // Update unit states
     this.unitSystem.updateAllUnitHighlights();
+    
+    // Show powerup menu
+    const powerupMenu = new PowerupMenu(this);
+    powerupMenu.create();
+    
     console.log('Advanced to round:', this.currentRound);
-
   }
 
   switchPlayer() {
