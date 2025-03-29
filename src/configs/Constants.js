@@ -182,7 +182,7 @@ export const POWERUP_MENU = {
     },
     CHOICE_BUTTON: {
         WIDTH: 150,
-        HEIGHT: 100,
+        HEIGHT: 200,
         SPACING: 20,
         COLOR: 0x4CAF50,
         TEXT: {

@@ -8,13 +8,18 @@
 ## Phase 1 - Powerups
 - Reset countdown timer
 - Reset ready indicator
-- Reset / Recenter view
-- Update resources
+- Reset / Recenter view (focus on current player's deployment zone)
+- Update resources (default amount + 200 gold per round)
 - Toggle fog of war on
-- Only show units placed in round < currentRound
-- Display powerup options window
-- Hide window option available
-- Show window option available
+- Unit visibility rules:
+  - Current round units: invisible to opponent
+  - Previous round units: visible to all
+- Display powerup options window (modal, not full screen)
+  - Four powerup choices
+  - "Hide Powerup Menu" button available
+  - When hidden, "Show Powerup Menu" button appears at top of screen
+  - Window is not draggable
+  - Window is destroyed after selection
 - Cannot move units until selection made
 - Choose Powerup
 - Spawn units
@@ -29,8 +34,8 @@
 - Disable fog of war
 - Minimize UI
 - Enable/Begin combat
-- On unit death, check unit’s surviving on both teams
-- If no unit’s surviving on one team
+- On unit death, check unit's surviving on both teams
+- If no unit's surviving on one team
   - Do damage
   - Assess survival
     - If losing player has health remaining
