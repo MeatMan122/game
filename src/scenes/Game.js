@@ -123,7 +123,7 @@ export class Game extends Scene {
       }
   }
 
-  update() {
+  update(time, delta) {
     // Camera movement with WASD keys
     const camera = this.cameras.main;
 
@@ -143,6 +143,9 @@ export class Game extends Scene {
     if (this.wasd.down.isDown) {
       camera.scrollY += moveY;
     }
+    
+    // Update units during battle phase
+    this.unitSystem.updateUnits(time, delta);
   }
 
   setupKeybindings() {
@@ -333,7 +336,8 @@ export class Game extends Scene {
         this.currentPhase = phase;
         // Disable fog of war during battle phase
         this.fogOfWarSystem.toggle(false);
-       
+        // Update unit visibility now that fog of war is disabled and we're in battle phase
+        this.unitSystem.updateAllUnitHighlights();
         break;
       case PHASE.RESOLUTION:
         console.log('Current Phase: ', this.currentPhase)
@@ -471,12 +475,83 @@ export class Game extends Scene {
   }
 
   /**
-   * Starts the battle phase.
-   * To be implemented with battle mechanics.
+   * Handles the battle phase.
+   * Sets up the battle environment and prepares units for combat.
    */
   startBattle() {
-    // This method will be implemented later to start the battle phase
     console.log('Both players are ready! Starting battle...');
+    
+    // Disable fog of war during battle
+    this.fogOfWarSystem.toggle(false);
+    
+    // Remove highlights from all units
+    this.unitSystem.updateAllUnitHighlights();
+    
+    // Disable unit selection for repositioning
+    if (this.unitSystem.selectedUnitGroup) {
+      this.unitSystem.selectedUnitGroup.setSelected(false);
+      this.unitSystem.clearUnitSelection();
+    }
+    
+    // Update to battle phase
+    this.handleRoundPhaseChange(PHASE.BATTLE);
+  }
+  
+  /**
+   * Handles the end of a battle when one player loses all units.
+   * @param {string} winner - ID of the winning player
+   */
+  handleBattleEnd(winner) {
+    console.log(`Battle ended! Winner: ${winner}`);
+    
+    // Calculate damage to losing player
+    const loser = winner === 'playerOne' ? 'playerTwo' : 'playerOne';
+    
+    // Simplified damage calculation - can be expanded based on game design
+    const damage = 20; // Fixed damage for now
+    
+    // Apply damage to loser's health (health system to be implemented)
+    this.applyDamage(loser, damage);
+    
+    // Check if game is over
+    if (this.checkGameOver()) {
+      this.handleRoundPhaseChange(PHASE.RESOLUTION);
+    } else {
+      // If game not over, move to next round
+      this.handleRoundPhaseChange(PHASE.POWERUP);
+    }
+  }
+  
+  /**
+   * Applies damage to a player's health.
+   * @param {string} player - ID of player to damage
+   * @param {number} damage - Amount of damage to apply
+   */
+  applyDamage(player, damage) {
+    // Simple health implementation - would need to be expanded
+    if (!this.playerHealth) {
+      this.playerHealth = {
+        'playerOne': 100,
+        'playerTwo': 100
+      };
+    }
+    
+    this.playerHealth[player] -= damage;
+    
+    // Ensure health doesn't go below 0
+    if (this.playerHealth[player] < 0) {
+      this.playerHealth[player] = 0;
+    }
+    
+    console.log(`${player} took ${damage} damage. Remaining health: ${this.playerHealth[player]}`);
+  }
+  
+  /**
+   * Checks if the game is over (a player has 0 health).
+   * @returns {boolean} Whether the game is over
+   */
+  checkGameOver() {
+    return this.playerHealth['playerOne'] <= 0 || this.playerHealth['playerTwo'] <= 0;
   }
 
 }

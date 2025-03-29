@@ -1,4 +1,5 @@
 import { GRID, DEPTH, TERRITORY_COLORS, UNIT, PHASE } from '../configs/Constants';
+import { UNIT_CONFIGS } from '../configs/UnitConfigs';
 
 /**
  * Represents a game unit that can be placed on the grid and manipulated by players.
@@ -18,6 +19,14 @@ import { GRID, DEPTH, TERRITORY_COLORS, UNIT, PHASE } from '../configs/Constants
  * @property {boolean} isSelected - Whether the unit is currently selected
  * @property {boolean} isInvalidPosition - Whether the unit is in an invalid position
  * @property {string} owner - The player who owns this unit
+ * @property {number} health - Current health of the unit
+ * @property {number} maxHealth - Maximum health of the unit
+ * @property {number} speed - Movement speed of the unit
+ * @property {number} attackPower - Attack power of the unit
+ * @property {number} attackRange - Attack range of the unit
+ * @property {Unit} target - Current target unit for movement/combat
+ * @property {boolean} isMoving - Whether the unit is currently moving
+ * @property {boolean} isAttacking - Whether the unit is currently attacking
  */
 export class Unit {
     /**
@@ -39,6 +48,19 @@ export class Unit {
         this.isSelected = false;
         this.isInvalidPosition = false; // New flag for invalid position state
         this.owner = scene.currentPlayer; // Track which player owns this unit
+
+        // Battle attributes
+        const config = UNIT_CONFIGS[unitType];
+        this.maxHealth = config.health;
+        this.health = config.health;
+        this.speed = config.speed;
+        this.attackPower = config.attackPower;
+        this.attackRange = config.attackRange;
+        this.target = null;
+        this.isMoving = false;
+        this.isAttacking = false;
+        this.lastAttackTime = 0;
+        this.attackCooldown = 1000; // 1 second between attacks
 
         // Create the sprite
         this.createSprite();
@@ -342,12 +364,16 @@ export class Unit {
         const isFogActive = this.scene.fogOfWarSystem && this.scene.fogOfWarSystem.enabled;
         const isCurrentRound = this.roundCreated === this.scene.currentRound;
         const isOwnedByCurrentPlayer = this.owner === currentPlayer;
+        const isBattlePhase = this.scene.currentPhase === PHASE.BATTLE;
         
-        // Determine unit visibility based on fog of war rules
+        // Determine unit visibility based on fog of war rules and game phase
         let shouldBeVisible = true;
         
-        if (isFogActive && !isOwnedByCurrentPlayer) {
-            // If fog is active and unit belongs to opponent:
+        // During battle phase, all units should be visible regardless of ownership or creation round
+        if (isBattlePhase) {
+            shouldBeVisible = true;
+        } else if (isFogActive && !isOwnedByCurrentPlayer) {
+            // If fog is active and unit belongs to opponent (outside battle phase):
             // Only show units from previous rounds (not current round)
             shouldBeVisible = !isCurrentRound;
         }
@@ -366,5 +392,219 @@ export class Unit {
             this.highlightSprite.setPosition(this.sprite.x, this.sprite.y);
             this.updateHighlightColor();
         }
+    }
+
+    /**
+     * Updates the unit's state in the battle phase.
+     * Handles targeting, movement, and combat.
+     * @param {number} time - Current game time
+     * @param {number} delta - Time elapsed since last update
+     */
+    update(time, delta) {
+        // Only process battle logic during the battle phase
+        if (this.scene.currentPhase !== PHASE.BATTLE) return;
+        
+        // Skip if the unit is dead
+        if (this.health <= 0) return;
+        
+        // Find a target if we don't have one or current target is dead
+        if (!this.target || this.target.health <= 0) {
+            this.findNearestEnemy();
+        }
+        
+        // If we have a target, move toward it and possibly attack
+        if (this.target) {
+            const distance = this.getDistanceToTarget();
+            
+            // If in attack range, attack target
+            if (distance <= this.attackRange) {
+                this.attackTarget(time);
+            } 
+            // Otherwise, move toward target
+            else {
+                this.moveTowardTarget(delta);
+            }
+        }
+    }
+    
+    /**
+     * Finds the nearest enemy unit and sets it as the target.
+     */
+    findNearestEnemy() {
+        let nearestDistance = Infinity;
+        let nearestEnemy = null;
+        
+        // Iterate through all units and find the nearest enemy
+        this.scene.unitSystem.unitsById.forEach(unit => {
+            // Skip if this is our own unit or unit is dead
+            if (unit.owner === this.owner || unit.health <= 0) return;
+            
+            const distance = Phaser.Math.Distance.Between(
+                this.sprite.x, this.sprite.y,
+                unit.sprite.x, unit.sprite.y
+            );
+            
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestEnemy = unit;
+            }
+        });
+        
+        this.target = nearestEnemy;
+    }
+    
+    /**
+     * Moves the unit toward its current target.
+     * @param {number} delta - Time elapsed since last update
+     */
+    moveTowardTarget(delta) {
+        if (!this.target) return;
+        
+        // Calculate direction vector to target
+        const dirX = this.target.sprite.x - this.sprite.x;
+        const dirY = this.target.sprite.y - this.sprite.y;
+        
+        // Normalize direction vector
+        const length = Math.sqrt(dirX * dirX + dirY * dirY);
+        const normX = dirX / length;
+        const normY = dirY / length;
+        
+        // Calculate movement distance
+        const distance = this.speed * delta / 1000;
+        
+        // Calculate new position
+        const newX = this.sprite.x + normX * distance;
+        const newY = this.sprite.y + normY * distance;
+        
+        // Check for collisions with other units before moving
+        if (!this.checkCollision(newX, newY)) {
+            // Update sprite position
+            this.sprite.x = newX;
+            this.sprite.y = newY;
+            
+            // Also update highlight and outline
+            if (this.highlightSprite) {
+                this.highlightSprite.x = newX;
+                this.highlightSprite.y = newY;
+            }
+            if (this.outlineSprite) {
+                this.outlineSprite.x = newX;
+                this.outlineSprite.y = newY;
+            }
+            
+            // Convert world position to grid position
+            const { gridX, gridY } = this.scene.gridSystem.worldToGrid(newX, newY);
+            this.gridX = gridX;
+            this.gridY = gridY;
+        }
+    }
+    
+    /**
+     * Checks if moving to a new position would result in a collision.
+     * @param {number} x - New X position
+     * @param {number} y - New Y position
+     * @returns {boolean} Whether a collision would occur
+     */
+    checkCollision(x, y) {
+        // Define collision radius (smaller than grid size to allow units to get close)
+        const collisionRadius = GRID.CELL_SIZE * 0.4;
+        
+        // Check collision with each unit
+        for (const unit of this.scene.unitSystem.unitsById.values()) {
+            // Skip self and dead units
+            if (unit === this || unit.health <= 0) continue;
+            
+            // Calculate distance to unit
+            const distance = Phaser.Math.Distance.Between(x, y, unit.sprite.x, unit.sprite.y);
+            
+            // If distance is less than collision radius, we have a collision
+            if (distance < collisionRadius) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Attacks the current target.
+     * @param {number} time - Current game time
+     */
+    attackTarget(time) {
+        if (!this.target || this.target.health <= 0) return;
+        
+        // Check cooldown
+        if (time - this.lastAttackTime < this.attackCooldown) return;
+        
+        // Update last attack time
+        this.lastAttackTime = time;
+        
+        // Apply damage to target
+        this.target.takeDamage(this.attackPower);
+        
+        // Simple visual feedback for attack
+        this.scene.tweens.add({
+            targets: this.sprite,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 100,
+            yoyo: true
+        });
+    }
+    
+    /**
+     * Takes damage from an attack.
+     * @param {number} damage - Amount of damage to take
+     */
+    takeDamage(damage) {
+        this.health -= damage;
+        
+        // If health dropped to zero or below, die
+        if (this.health <= 0) {
+            this.health = 0;
+            this.die();
+        } else {
+            // Visual feedback for taking damage
+            this.scene.tweens.add({
+                targets: this.sprite,
+                alpha: 0.5,
+                duration: 100,
+                yoyo: true
+            });
+        }
+    }
+    
+    /**
+     * Handles the unit's death.
+     */
+    die() {
+        // Fade out the unit sprite
+        this.scene.tweens.add({
+            targets: [this.sprite, this.highlightSprite, this.outlineSprite],
+            alpha: 0,
+            duration: 500,
+            onComplete: () => {
+                this.sprite.visible = false;
+                this.highlightSprite.visible = false;
+                this.outlineSprite.visible = false;
+            }
+        });
+        
+        // Notify the unit system about the death
+        // This will be implemented in the UnitSystem class
+        this.scene.unitSystem.handleUnitDeath(this);
+    }
+    
+    /**
+     * Gets the distance to the current target.
+     * @returns {number} Distance to target or Infinity if no target
+     */
+    getDistanceToTarget() {
+        if (!this.target) return Infinity;
+        
+        return Phaser.Math.Distance.Between(
+            this.sprite.x, this.sprite.y,
+            this.target.sprite.x, this.target.sprite.y
+        );
     }
 } 

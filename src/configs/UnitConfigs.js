@@ -14,19 +14,31 @@ export const UNIT_TYPES = {
  * @type {Object.<string, {
  *   cost: number,
  *   unitsPerPlacement: number,
- *   color: number
+ *   color: number,
+ *   speed: number,
+ *   health: number,
+ *   attackPower: number,
+ *   attackRange: number
  * }>}
  */
 export const UNIT_CONFIGS = {
     [UNIT_TYPES.ARCHER]: {
         cost: 50,
         color: 0x00ff00,
-        unitsPerPlacement: 2
+        unitsPerPlacement: 2,
+        speed: 50,         // Slower than warrior
+        health: 80,        // Less health than warrior
+        attackPower: 15,   // Archer attack power
+        attackRange: 200   // Ranged attack (in pixels)
     },
     [UNIT_TYPES.WARRIOR]: {
         cost: 50,
         color: 0xff0000,
-        unitsPerPlacement: 4
+        unitsPerPlacement: 4,
+        speed: 80,         // Faster than archer
+        health: 150,       // More health than archer
+        attackPower: 25,   // Warrior attack power
+        attackRange: 40    // Melee attack (in pixels)
     }
 };
 

@@ -1,5 +1,5 @@
 import { UNIT_TYPES, UNIT_CONFIGS } from "../configs/UnitConfigs";
-import { GRID, UNIT, UI } from "../configs/Constants";
+import { GRID, UNIT, UI, PHASE } from "../configs/Constants";
 import { Warrior } from "../units/Warrior";
 import { Archer } from "../units/Archer";
 import { UnitGroup } from "../units/UnitGroup";
@@ -371,5 +371,82 @@ export class UnitSystem {
         Array.from(this.unitsById.values()).forEach(unit => {
             unit.updateHighlight();
         });
+    }
+
+    /**
+     * Updates all units during the battle phase.
+     * @param {number} time - Current game time
+     * @param {number} delta - Time elapsed since last update
+     */
+    updateUnits(time, delta) {
+        // Update all units if we're in the battle phase
+        if (this.scene.currentPhase === PHASE.BATTLE) {
+            this.unitsById.forEach(unit => {
+                unit.update(time, delta);
+            });
+            
+            // Check if battle is over
+            this.checkBattleStatus();
+        }
+    }
+    
+    /**
+     * Handles a unit's death during battle.
+     * @param {Unit} unit - The unit that died
+     */
+    handleUnitDeath(unit) {
+        // Check if there are any surviving units for this player
+        this.checkBattleStatus();
+    }
+    
+    /**
+     * Checks if the battle is over by counting surviving units for each player.
+     */
+    checkBattleStatus() {
+        let playerOneSurvivors = 0;
+        let playerTwoSurvivors = 0;
+        
+        // Count surviving units for each player
+        this.unitsById.forEach(unit => {
+            if (unit.health > 0) {
+                if (unit.owner === 'playerOne') {
+                    playerOneSurvivors++;
+                } else {
+                    playerTwoSurvivors++;
+                }
+            }
+        });
+        
+        // If either player has no survivors, end the battle
+        if (playerOneSurvivors === 0 || playerTwoSurvivors === 0) {
+            // Determine the winner
+            const winner = playerOneSurvivors > 0 ? 'playerOne' : 'playerTwo';
+            // Notify the game scene
+            this.scene.handleBattleEnd(winner);
+        }
+    }
+
+    /**
+     * Checks if the battle is over by counting surviving units for each player.
+     * Unlike checkBattleStatus, this method only returns the result without side effects.
+     * @returns {boolean} Whether there is a winner
+     */
+    checkBattleStatusImmediate() {
+        let playerOneSurvivors = 0;
+        let playerTwoSurvivors = 0;
+        
+        // Count surviving units for each player
+        this.unitsById.forEach(unit => {
+            if (unit.health > 0) {
+                if (unit.owner === 'playerOne') {
+                    playerOneSurvivors++;
+                } else {
+                    playerTwoSurvivors++;
+                }
+            }
+        });
+        
+        // If either player has no survivors, there is a winner
+        return playerOneSurvivors === 0 || playerTwoSurvivors === 0;
     }
 } 
