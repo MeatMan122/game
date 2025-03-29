@@ -1,4 +1,4 @@
-import { DEPTH } from "../../configs/Constants";
+import { DEPTH, PHASE } from "../../configs/Constants";
 
 /**
  * A customizable button component with text, background, and hover effects.
@@ -21,7 +21,7 @@ import { DEPTH } from "../../configs/Constants";
 export class Button {
   /**
    * Creates a new Button instance.
-   * @param {Phaser.Scene} scene - The scene this button belongs to
+   * @param {import('../../scenes/Game').Game} scene - The scene this button belongs to
    * @param {Object} config - Button configuration
    * @param {number} [config.x=0] - X position
    * @param {number} [config.y=0] - Y position
@@ -40,6 +40,7 @@ export class Button {
    * @param {boolean} [config.showStrokeOnHover=false] - Whether to show stroke on hover
    * @param {number} [config.strokeColor=0xffffff] - Stroke color
    * @param {number} [config.strokeWidth=2] - Stroke width
+   * @param {boolean} [config.clickableDuringPowerup=false] - Whether the button is clickable during powerup phase
    */
   constructor(scene, config = {}) {
     this.scene = scene;
@@ -64,6 +65,9 @@ export class Button {
     this.showStrokeOnHover = config.showStrokeOnHover || false;
     this.strokeColor = config.strokeColor || 0xffffff;
     this.strokeWidth = config.strokeWidth || 2;
+    
+    // Phase-specific clickability
+    this.clickableDuringPowerup = config.clickableDuringPowerup || false;
     
     // Container for all button elements
     this.container = scene.add.container(0, 0);
@@ -153,7 +157,12 @@ export class Button {
     
     // Common click handler
     this.background.on('pointerdown', () => {
-      this.onClick();
+      // Check if button can be clicked based on game phase
+      const isPowerupPhase = this.scene.currentPhase === PHASE.POWERUP;
+      
+      if (!isPowerupPhase || this.clickableDuringPowerup) {
+        this.onClick();
+      }
     });
     
     // Add elements to container

@@ -1,4 +1,4 @@
-import { GRID, DEPTH, TERRITORY_COLORS, UNIT } from '../configs/Constants';
+import { GRID, DEPTH, TERRITORY_COLORS, UNIT, PHASE } from '../configs/Constants';
 
 /**
  * Represents a game unit that can be placed on the grid and manipulated by players.
@@ -70,7 +70,6 @@ export class Unit {
         this.sprite = this.scene.add.sprite(0, 0, `${this.unitType}-idle`, 0);
         this.sprite.play(`${this.unitType}-idle`);
         this.sprite.setInteractive();
-        this.sprite.unit = this; // Reference back to this Unit instance
         this.scene.gameContainer.add(this.sprite);
         this.sprite.setDepth(DEPTH.GROUND_UNITS); // Ensure unit is above the highlight
 
@@ -173,11 +172,13 @@ export class Unit {
      * @private
      */
     handleDoubleClick(pointer) {
-        const unitSystem = this.scene.unitSystem;
-        const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
-
-        if (group && unitSystem.canPlayerInteractWithUnit(group) && group.canReposition) {
-            unitSystem.startRepositioningGroup(group);
+        if (this.scene.currentPhase == PHASE.PLANNING) {
+            const unitSystem = this.scene.unitSystem;
+            const group = unitSystem.getUnitGroup(this.gridX, this.gridY);
+            
+            if (group && unitSystem.canPlayerInteractWithUnit(group) && group.canReposition) {
+                unitSystem.startRepositioningGroup(group);
+            }
         }
     }
 
@@ -293,7 +294,7 @@ export class Unit {
 
     /**
      * Gets the unit's current grid position.
-     * @returns {{x: number, y: number}} The grid coordinates
+     * @returns {{gridX: number, gridY: number}} The grid coordinates
      */
     getGridPosition() {
         if (this.gridX !== null && this.gridY !== null) {

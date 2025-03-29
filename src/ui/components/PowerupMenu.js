@@ -129,7 +129,8 @@ export class PowerupMenu {
                 hoverColor: 0xcccccc, // Lighter color on hover
                 onClick: () => this.handleSelection(choice),
                 originX: 0.5,
-                originY: 0.5
+                originY: 0.5,
+                clickableDuringPowerup: true // Mark as clickable during powerup phase
             });
             
             // Store reference to button for cleanup
@@ -160,7 +161,8 @@ export class PowerupMenu {
             hoverColor: 0x777777, // Darker on hover
             onClick: () => this.hide(),
             originX: 0.5,
-            originY: 0.5
+            originY: 0.5,
+            clickableDuringPowerup: true // Mark as clickable during powerup phase
         });
         
         // Add button container to menu container
@@ -193,7 +195,8 @@ export class PowerupMenu {
             onClick: () => this.show(),
             depth: DEPTH.UI_FULLSCREEN,
             originX: 0.5,
-            originY: 0.5
+            originY: 0.5,
+            clickableDuringPowerup: true // Mark as clickable during powerup phase
         });
         
         this.showButton = showButtonInstance.container;
