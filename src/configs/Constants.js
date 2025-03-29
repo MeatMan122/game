@@ -201,5 +201,16 @@ export const POWERUP_MENU = {
         POSITION: {
             X_OFFSET: 220  // pixels to the right of timer
         }
+    },
+    ANIMATION: {
+        SLIDE_DURATION: 500,
+        BOUNCE: {
+            DURATION: 100,
+            DISTANCE: 10
+        },
+        COLLAPSE: {
+            DURATION: 300,
+            EASE: 'Power2'
+        }
     }
 };

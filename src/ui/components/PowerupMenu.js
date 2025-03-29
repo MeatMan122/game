@@ -46,6 +46,32 @@ export class PowerupMenu {
 
         this.createPowerupChoices();
         this.createHideButton();
+
+        // Start animation
+        this.animateIn();
+    }
+
+    animateIn() {
+        // Start from above screen
+        const startY = -this.modalHeight;
+        this.modalBg.y = startY;
+        this.container.y = startY + this.modalHeight / 2;
+
+        // Slide down animation
+        this.scene.tweens.add({
+            targets: [this.modalBg],
+            y: this.modalY,
+            duration: POWERUP_MENU.ANIMATION.SLIDE_DURATION,
+            ease: 'Power2',
+        });
+
+        // Animate container in sync with background
+        this.scene.tweens.add({
+            targets: [this.container],
+            y: this.modalY + this.modalHeight / 2,
+            duration: POWERUP_MENU.ANIMATION.SLIDE_DURATION,
+            ease: 'Power2'
+        });
     }
 
     createPowerupChoices() {
@@ -138,14 +164,77 @@ export class PowerupMenu {
     }
 
     hide() {
-        this.modalBg.setVisible(false);
-        this.container.setVisible(false);
-        this.createShowButton();
+        // Get the final position of the show button
+        const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
+        const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
+
+        // Collapse animation
+        this.scene.tweens.add({
+            targets: [this.modalBg],
+            x: buttonX - POWERUP_MENU.SHOW_BUTTON.WIDTH / 2,
+            y: TIMER.POSITION.Y - POWERUP_MENU.SHOW_BUTTON.HEIGHT / 2,
+            width: POWERUP_MENU.SHOW_BUTTON.WIDTH,
+            height: POWERUP_MENU.SHOW_BUTTON.HEIGHT,
+            duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
+            ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE,
+            onComplete: () => {
+                this.modalBg.setVisible(false);
+                this.container.setVisible(false);
+                this.createShowButton();
+            }
+        });
+
+        // Fade out container
+        this.scene.tweens.add({
+            targets: [this.container],
+            alpha: 0,
+            duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
+            ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE
+        });
     }
 
     show() {
+        // Make elements visible
         this.modalBg.setVisible(true);
         this.container.setVisible(true);
+        this.container.setAlpha(1); // Set alpha to 1 since we're not fading
+
+        // Get current button position
+        const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
+        const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
+
+        // Set initial position (at show button)
+        this.modalBg.x = buttonX - POWERUP_MENU.SHOW_BUTTON.WIDTH / 2;
+        this.modalBg.y = TIMER.POSITION.Y - POWERUP_MENU.SHOW_BUTTON.HEIGHT / 2;
+        this.modalBg.width = POWERUP_MENU.SHOW_BUTTON.WIDTH;
+        this.modalBg.height = POWERUP_MENU.SHOW_BUTTON.HEIGHT;
+
+        // Set container's initial position to match the show button
+        this.container.x = buttonX;
+        this.container.y = TIMER.POSITION.Y;
+        this.container.setScale(POWERUP_MENU.SHOW_BUTTON.WIDTH / this.modalWidth);
+
+        // Expand animation for background
+        this.scene.tweens.add({
+            targets: [this.modalBg],
+            x: this.modalX,
+            y: this.modalY,
+            width: this.modalWidth,
+            height: this.modalHeight,
+            duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
+            ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE
+        });
+
+        // Expand and move container in sync with background
+        this.scene.tweens.add({
+            targets: [this.container],
+            x: this.modalX + this.modalWidth / 2,
+            y: this.modalY + this.modalHeight / 2,
+            scale: 1,
+            duration: POWERUP_MENU.ANIMATION.COLLAPSE.DURATION,
+            ease: POWERUP_MENU.ANIMATION.COLLAPSE.EASE
+        });
+
         if (this.showButton) {
             this.showButton.destroy();
             this.showButton = null;
