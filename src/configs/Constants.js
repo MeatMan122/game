@@ -116,8 +116,8 @@ export const DEPTH = {
     UI_BACKGROUND: 95,
     UI_ELEMENTS: 100,
     UI_FOREGROUND: 105,
-    TOOLTIP: 110,
-    UI_FULLSCREEN: 115
+    UI_FULLSCREEN: 110,
+    TOOLTIP: 115
 }; 
 
 export const PLAYERS = {
@@ -167,6 +167,39 @@ export const OPENING_MENU = {
         TEXT: {
             COLOR: '#ffffff',
             FONT_SIZE: '24px'
+        }
+    }
+};
+
+export const POWERUP_MENU = {
+    BACKGROUND: {
+        COLOR: 0x000000,
+        ALPHA: 1.0
+    },
+    MODAL: {
+        SCREEN_MARGIN: 0.25,  // 25% margin on each side
+        INNER_PADDING: 25     // padding inside the modal
+    },
+    CHOICE_BUTTON: {
+        WIDTH: 150,
+        HEIGHT: 100,
+        SPACING: 20,
+        COLOR: 0x4CAF50,
+        TEXT: {
+            COLOR: '#ffffff',
+            FONT_SIZE: '20px'
+        }
+    },
+    SHOW_BUTTON: {
+        WIDTH: 200,
+        HEIGHT: 40,
+        COLOR: 0x666666,
+        TEXT: {
+            COLOR: '#ffffff',
+            FONT_SIZE: '16px'
+        },
+        POSITION: {
+            X_OFFSET: 220  // pixels to the right of timer
         }
     }
 };

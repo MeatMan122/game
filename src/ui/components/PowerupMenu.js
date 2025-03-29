@@ -1,4 +1,4 @@
-import { DEPTH, PHASE } from '../../configs/Constants';
+import { DEPTH, PHASE, POWERUP_MENU, TIMER } from '../../configs/Constants';
 
 export class PowerupMenu {
     constructor(scene) {
@@ -6,27 +6,43 @@ export class PowerupMenu {
         this.container = null;
         this.modalBg = null;
         this.showButton = null;
+        
+        // Calculate required width for buttons
+        const totalButtonWidth = (POWERUP_MENU.CHOICE_BUTTON.WIDTH * 4) + 
+                               (POWERUP_MENU.CHOICE_BUTTON.SPACING * 3) +
+                               (POWERUP_MENU.MODAL.INNER_PADDING * 2);
+        
+        // Calculate modal dimensions ensuring it fits the buttons
+        const margin = POWERUP_MENU.MODAL.SCREEN_MARGIN;
+        this.modalWidth = Math.max(
+            this.scene.scale.width * (1 - 2 * margin),
+            totalButtonWidth
+        );
+        this.modalHeight = this.scene.scale.height * (1 - 2 * margin);
+        this.modalX = (this.scene.scale.width - this.modalWidth) / 2;
+        this.modalY = this.scene.scale.height * margin;
     }
 
     create() {
-        // Create semi-transparent background
+        // Create opaque background for modal
         this.modalBg = this.scene.add.rectangle(
-            0, 0,
-            this.scene.scale.width,
-            this.scene.scale.height,
-            0x000000,
-            0.5
+            this.modalX,
+            this.modalY,
+            this.modalWidth,
+            this.modalHeight,
+            POWERUP_MENU.BACKGROUND.COLOR,
+            POWERUP_MENU.BACKGROUND.ALPHA
         );
         this.modalBg.setOrigin(0);
-        this.modalBg.setDepth(DEPTH.UI_BACKGROUND);
+        this.modalBg.setDepth(DEPTH.UI_FULLSCREEN);
         this.modalBg.setInteractive();
 
         // Create container for menu elements
         this.container = this.scene.add.container(
-            this.scene.scale.width / 2,
-            this.scene.scale.height / 2
+            this.modalX + this.modalWidth / 2,
+            this.modalY + this.modalHeight / 2
         );
-        this.container.setDepth(DEPTH.UI_ELEMENTS);
+        this.container.setDepth(DEPTH.UI_FULLSCREEN);
 
         this.createPowerupChoices();
         this.createHideButton();
@@ -34,23 +50,26 @@ export class PowerupMenu {
 
     createPowerupChoices() {
         const choices = ['Powerup 1', 'Powerup 2', 'Powerup 3', 'Powerup 4'];
-        const buttonWidth = 150;
-        const buttonHeight = 100;
-        const spacing = 20;
+        const buttonWidth = POWERUP_MENU.CHOICE_BUTTON.WIDTH;
+        const buttonHeight = POWERUP_MENU.CHOICE_BUTTON.HEIGHT;
+        const spacing = POWERUP_MENU.CHOICE_BUTTON.SPACING;
 
         choices.forEach((choice, index) => {
             const x = (index - 1.5) * (buttonWidth + spacing);
             const button = this.scene.add.rectangle(
                 x, 0,
                 buttonWidth, buttonHeight,
-                0x4CAF50
+                POWERUP_MENU.CHOICE_BUTTON.COLOR
             );
             button.setInteractive();
 
             const text = this.scene.add.text(
                 x, 0,
                 choice,
-                { fontSize: '20px', color: '#ffffff' }
+                {
+                    fontSize: POWERUP_MENU.CHOICE_BUTTON.TEXT.FONT_SIZE,
+                    color: POWERUP_MENU.CHOICE_BUTTON.TEXT.COLOR
+                }
             );
             text.setOrigin(0.5);
 
@@ -65,15 +84,19 @@ export class PowerupMenu {
     createHideButton() {
         const button = this.scene.add.rectangle(
             0, 100,
-            200, 40,
-            0x666666
+            POWERUP_MENU.SHOW_BUTTON.WIDTH,
+            POWERUP_MENU.SHOW_BUTTON.HEIGHT,
+            POWERUP_MENU.SHOW_BUTTON.COLOR
         );
         button.setInteractive();
 
         const text = this.scene.add.text(
             0, 100,
             'Hide Powerup Menu',
-            { fontSize: '16px', color: '#ffffff' }
+            {
+                fontSize: POWERUP_MENU.SHOW_BUTTON.TEXT.FONT_SIZE,
+                color: POWERUP_MENU.SHOW_BUTTON.TEXT.COLOR
+            }
         );
         text.setOrigin(0.5);
 
@@ -82,23 +105,31 @@ export class PowerupMenu {
     }
 
     createShowButton() {
+        // Position to the right of the timer
+        const timerCenterX = this.scene.scale.width * TIMER.POSITION.X;
+        const buttonX = timerCenterX + TIMER.READY_BUTTON.WIDTH / 2 + POWERUP_MENU.SHOW_BUTTON.POSITION.X_OFFSET;
+        
         this.showButton = this.scene.add.container(
-            this.scene.scale.width / 2,
-            30
+            buttonX,
+            TIMER.POSITION.Y
         );
-        this.showButton.setDepth(DEPTH.UI_ELEMENTS);
+        this.showButton.setDepth(DEPTH.UI_FULLSCREEN);
 
         const button = this.scene.add.rectangle(
             0, 0,
-            200, 40,
-            0x666666
+            POWERUP_MENU.SHOW_BUTTON.WIDTH,
+            POWERUP_MENU.SHOW_BUTTON.HEIGHT,
+            POWERUP_MENU.SHOW_BUTTON.COLOR
         );
         button.setInteractive();
 
         const text = this.scene.add.text(
             0, 0,
             'Show Powerup Menu',
-            { fontSize: '16px', color: '#ffffff' }
+            {
+                fontSize: POWERUP_MENU.SHOW_BUTTON.TEXT.FONT_SIZE,
+                color: POWERUP_MENU.SHOW_BUTTON.TEXT.COLOR
+            }
         );
         text.setOrigin(0.5);
 
